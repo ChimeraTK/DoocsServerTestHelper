@@ -16,9 +16,6 @@ using mtca4u::doocsServerTestHelper;
 
 /**********************************************************************************************************************/
 
-// event number, defined in llrfCtrl_rpc_server.cc
-extern uint64_t gen_event;
-
 // pointer to server location
 extern EqFctSvr *server_eq;
 
@@ -89,7 +86,6 @@ namespace mtca4u {
   bool doocsServerTestHelper::doNotProcessSignalsInDoocs = false;
   int doocsServerTestHelper::magic_sleep_time_sec = 0xDEAD;
   int doocsServerTestHelper::magic_sleep_time_usec = 0xBEEF;
-  int doocsServerTestHelper::event = 0;
   std::mutex doocsServerTestHelper::update_mutex;
   std::mutex doocsServerTestHelper::sigusr1_mutex;
 
@@ -115,8 +111,6 @@ namespace mtca4u {
   /**********************************************************************************************************************/
 
   void doocsServerTestHelper::runSigusr1() {
-      event++;    // increase event number
-      gen_event = event;
       allowSigusr1 = true;
       do {
         sigusr1_mutex.unlock();
