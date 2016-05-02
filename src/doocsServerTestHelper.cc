@@ -12,6 +12,7 @@
 
 #include <doocsServerTestHelper.h>
 
+using mtca4u::doocsServerTestHelper;
 
 /**********************************************************************************************************************/
 
@@ -20,17 +21,6 @@ extern uint64_t gen_event;
 
 // pointer to server location
 extern EqFctSvr *server_eq;
-
-bool doocsServerTestHelper::allowUpdate = false;
-bool doocsServerTestHelper::allowSigusr1 = false;
-bool doocsServerTestHelper::interceptSystemCalls = false;
-bool doocsServerTestHelper::doNotProcessSignalsInDoocs = false;
-int doocsServerTestHelper::magic_sleep_time_sec = 0xDEAD;
-int doocsServerTestHelper::magic_sleep_time_usec = 0xBEEF;
-int doocsServerTestHelper::event = 0;
-std::mutex doocsServerTestHelper::update_mutex;
-std::mutex doocsServerTestHelper::sigusr1_mutex;
-
 
 /**********************************************************************************************************************/
 
@@ -91,56 +81,70 @@ extern "C" int sigwait(__const sigset_t *__restrict __set, int *__restrict __sig
 
 /**********************************************************************************************************************/
 
-void doocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs) {
+namespace mtca4u {
 
-    // acquire locks
-    sigusr1_mutex.lock();
-    update_mutex.lock();
-    
-    // enable intercepting system calls
-    interceptSystemCalls = true;
-    doNotProcessSignalsInDoocs = _doNotProcessSignalsInDoocs;
+  bool doocsServerTestHelper::allowUpdate = false;
+  bool doocsServerTestHelper::allowSigusr1 = false;
+  bool doocsServerTestHelper::interceptSystemCalls = false;
+  bool doocsServerTestHelper::doNotProcessSignalsInDoocs = false;
+  int doocsServerTestHelper::magic_sleep_time_sec = 0xDEAD;
+  int doocsServerTestHelper::magic_sleep_time_usec = 0xBEEF;
+  int doocsServerTestHelper::event = 0;
+  std::mutex doocsServerTestHelper::update_mutex;
+  std::mutex doocsServerTestHelper::sigusr1_mutex;
 
-    // trigger sigusr1 once to make sure the server has started
-    runSigusr1();
+  /**********************************************************************************************************************/
 
-    // change update rate, so nanosleep is detected properly
-    server_eq->SetSrvUpdateRate(magic_sleep_time_sec,magic_sleep_time_usec);
-}
+  void doocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs) {
 
-/**********************************************************************************************************************/
-
-void doocsServerTestHelper::runSigusr1() {
-    event++;    // increase event number
-    gen_event = event;
-    allowSigusr1 = true;
-    do {
-      sigusr1_mutex.unlock();
-      usleep(1);
+      // acquire locks
       sigusr1_mutex.lock();
-    } while(allowSigusr1);
-}
-
-/**********************************************************************************************************************/
-
-void doocsServerTestHelper::runUpdate() {
-    allowUpdate = true;
-    do {
-      update_mutex.unlock();
-      usleep(1);
       update_mutex.lock();
-    } while(allowUpdate);
-}
 
-/**********************************************************************************************************************/
+      // enable intercepting system calls
+      interceptSystemCalls = true;
+      doNotProcessSignalsInDoocs = _doNotProcessSignalsInDoocs;
 
-void doocsServerTestHelper::shutdown() {
-    kill(getpid(), SIGINT);
-    usleep(100000);
-    allowUpdate = true;
-    allowSigusr1 = true;
-    update_mutex.unlock();
-    sigusr1_mutex.unlock();
-}
+      // trigger sigusr1 once to make sure the server has started
+      runSigusr1();
 
+      // change update rate, so nanosleep is detected properly
+      server_eq->SetSrvUpdateRate(magic_sleep_time_sec,magic_sleep_time_usec);
+  }
 
+  /**********************************************************************************************************************/
+
+  void doocsServerTestHelper::runSigusr1() {
+      event++;    // increase event number
+      gen_event = event;
+      allowSigusr1 = true;
+      do {
+        sigusr1_mutex.unlock();
+        usleep(1);
+        sigusr1_mutex.lock();
+      } while(allowSigusr1);
+  }
+
+  /**********************************************************************************************************************/
+
+  void doocsServerTestHelper::runUpdate() {
+      allowUpdate = true;
+      do {
+        update_mutex.unlock();
+        usleep(1);
+        update_mutex.lock();
+      } while(allowUpdate);
+  }
+
+  /**********************************************************************************************************************/
+
+  void doocsServerTestHelper::shutdown() {
+      kill(getpid(), SIGINT);
+      usleep(100000);
+      allowUpdate = true;
+      allowSigusr1 = true;
+      update_mutex.unlock();
+      sigusr1_mutex.unlock();
+  }
+
+} /* namespace mtca4u */
