@@ -32,7 +32,7 @@ else()
 endif()
 
 # linker flags
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--export-dynamic")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed -Wl,--export-dynamic")
 
 FIND_PACKAGE(DOOCS 18.10 REQUIRED)
 include_directories(SYSTEM ${DOOCS_INCLUDE_DIRS})
@@ -47,7 +47,7 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/src library_sources)
 add_library(${PROJECT_NAME} SHARED ${library_sources} )
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${${PROJECT_NAME}_VERSION} SOVERSION ${${PROJECT_NAME}_SOVERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS ${DOOCS_CXX_FLAGS})
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS ${DOOCS_LINK_FLAGS})
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-Wl,--no-as-needed ${DOOCS_LINK_FLAGS}")
 target_link_libraries(${PROJECT_NAME} ${DOOCS_LIBRARIES})
 
 # add a target to generate API documentation with Doxygen
@@ -66,7 +66,7 @@ endif(DOXYGEN_FOUND)
 
 #Install the library and the executables
 install(TARGETS ${PROJECT_NAME}
-            RUNTIME DESTINATION bin
+        RUNTIME DESTINATION bin
 	    LIBRARY DESTINATION lib
   )
 
@@ -75,7 +75,7 @@ install(TARGETS ${PROJECT_NAME}
 
 #some variables we need for regular Makefiles, for which we also provide the config
 set(${PROJECT_NAME}_CPPFLAGS "${${PROJECT_NAME}_CPPFLAGS} -I${CMAKE_INSTALL_PREFIX}/include ")
-set(${PROJECT_NAME}_LDFLAGS "-L${CMAKE_INSTALL_PREFIX}/lib -l${PROJECT_NAME} ")
+set(${PROJECT_NAME}_LDFLAGS "-L${CMAKE_INSTALL_PREFIX}/lib -Wl,--no-as-needed -l${PROJECT_NAME} ")
 #MATLABs mex cannot deal with the rpath and C+=11 flags, so we provide special flags
 set(${PROJECT_NAME}_MEXFLAGS "-I${CMAKE_INSTALL_PREFIX}/include ${${PROJECT_NAME}_LDFLAGS} ")
 #only now we extend the LDFLAGS to its final value, including the runpath
