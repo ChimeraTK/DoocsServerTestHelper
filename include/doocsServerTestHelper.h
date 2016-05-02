@@ -11,6 +11,7 @@
 #define DOOCS_SERVER_TEST_HELPER_H
 
 #include <mutex>
+#include <future>
 #include <signal.h>
 
 #include <eq_fct.h>
@@ -218,6 +219,13 @@ namespace mtca4u {
       /// mutex and flag to trigger interrupt_usr1()
       static std::mutex sigusr1_mutex;
       static bool allowSigusr1;
+
+      /// future and promise to synchronise server startup
+      static std::future<void> serverIsStarted;
+      static std::promise<void> setServerIsStarted;
+
+      /// flat set if the nanosleep() function should set the promise setServerIsStarted
+      static bool bootingServer;
 
       /// magic sleep time to identify the nanosleep to intercept
       static int magic_sleep_time_sec;

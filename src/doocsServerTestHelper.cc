@@ -22,9 +22,13 @@ extern EqFctSvr *server_eq;
 /**********************************************************************************************************************/
 
 extern "C" int nanosleep(__const struct timespec *__requested_time, struct timespec *__remaining) {
+    if(doocsServerTestHelper::bootingServer) {
+      doocsServerTestHelper::bootingServer = false;
+      doocsServerTestHelper::setServerIsStarted.set_value();
+    }
 
     // call original-equivalent version if requested time does not match the magic signature
-    if(!doocsServerTestHelper::interceptSystemCalls					  || 
+    if(!doocsServerTestHelper::interceptSystemCalls                                   ||
         __requested_time->tv_sec  != doocsServerTestHelper::magic_sleep_time_sec      ||
        __requested_time->tv_nsec != doocsServerTestHelper::magic_sleep_time_usec*1000    ) {
       return clock_nanosleep(CLOCK_MONOTONIC,0,__requested_time,__remaining);
@@ -83,11 +87,14 @@ namespace mtca4u {
   bool doocsServerTestHelper::allowUpdate = false;
   bool doocsServerTestHelper::allowSigusr1 = false;
   bool doocsServerTestHelper::interceptSystemCalls = false;
+  bool doocsServerTestHelper::bootingServer = false;
   bool doocsServerTestHelper::doNotProcessSignalsInDoocs = false;
   int doocsServerTestHelper::magic_sleep_time_sec = 0xDEAD;
   int doocsServerTestHelper::magic_sleep_time_usec = 0xBEEF;
   std::mutex doocsServerTestHelper::update_mutex;
   std::mutex doocsServerTestHelper::sigusr1_mutex;
+  std::promise<void> doocsServerTestHelper::setServerIsStarted;
+  std::future<void> doocsServerTestHelper::serverIsStarted = doocsServerTestHelper::setServerIsStarted.get_future();
 
   /**********************************************************************************************************************/
 
@@ -97,15 +104,23 @@ namespace mtca4u {
       sigusr1_mutex.lock();
       update_mutex.lock();
 
+      // wait until server initialised
+      while(!server_eq) {
+        usleep(10);
+      }
+
       // enable intercepting system calls
+      server_eq->lock();
       interceptSystemCalls = true;
       doNotProcessSignalsInDoocs = _doNotProcessSignalsInDoocs;
+      bootingServer = true;
+      server_eq->unlock();
 
-      // trigger sigusr1 once to make sure the server has started
-      runSigusr1();
+      // wait until server properly started (i.e. nanosleep() called for the first time)
+      doocsServerTestHelper::serverIsStarted.get();
 
       // change update rate, so nanosleep is detected properly
-      server_eq->SetSrvUpdateRate(magic_sleep_time_sec,magic_sleep_time_usec);
+      server_eq->SetSrvUpdateRate(magic_sleep_time_sec,magic_sleep_time_usec);  // has no effect. why?
   }
 
   /**********************************************************************************************************************/
