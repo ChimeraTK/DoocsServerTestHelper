@@ -8,6 +8,8 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <time.h>
+#include <unistd.h>
+
 #include <eq_fct.h>
 
 #include <doocsServerTestHelper.h>
