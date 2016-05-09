@@ -71,12 +71,47 @@ namespace mtca4u {
       }
 
       /**********************************************************************************************************************/
-      /** set a DOOCS property - array/spectrum version
+      /** set a DOOCS property - array version
        *  "name" is the property name in the form "//<location>/<property>"
        *  "value" is the value to be set
        */
       template<typename TYPE>
       static void doocsSet( const std::string &name, const std::vector<TYPE> &value ) {
+          EqAdr ad;
+          EqData ed, res;
+
+          // set type and length
+          if(typeid(TYPE) == typeid(int)) {
+            ed.set_type(DATA_A_INT);
+          }
+          else if(typeid(TYPE) == typeid(float)) {
+            ed.set_type(DATA_A_FLOAT);
+          }
+          else {
+            ASSERT(false, std::string("Unknown data type!"));
+          }
+          ed.length(value.size());
+
+          // fill spectrum data structure
+          for(int i=0; i<value.size(); i++) ed.set(value[i],i);
+          // obtain location pointer
+          ad.adr(name.c_str());
+          EqFct *p = eq_get(&ad);
+          ASSERT(p != NULL, std::string("Could not get location for property ")+name);
+          // set spectrum
+          p->lock();
+          p->set(&ad,&ed,&res);
+          p->unlock();
+          // check for error
+          ASSERT(res.error() == 0, std::string("Error writing array property ")+name);
+      }
+
+      /**********************************************************************************************************************/
+      /** set a DOOCS property - spectrum version
+       *  "name" is the property name in the form "//<location>/<property>"
+       *  "value" is the value to be set
+       */
+      static void doocsSetSpectrum( const std::string &name, const std::vector<float> &value ) {
           EqAdr ad;
           EqData ed, res;
           // fill spectrum data structure
@@ -93,7 +128,7 @@ namespace mtca4u {
           p->set(&ad,&ed,&res);
           p->unlock();
           // check for error
-          ASSERT(res.error() == 0, std::string("Error writing property ")+name);
+          ASSERT(res.error() == 0, std::string("Error writing spectrum property ")+name);
       }
 
       /**********************************************************************************************************************/
