@@ -87,6 +87,9 @@ namespace mtca4u {
           else if(typeid(TYPE) == typeid(float)) {
             ed.set_type(DATA_A_FLOAT);
           }
+          else if(typeid(TYPE) == typeid(double)) {
+            ed.set_type(DATA_A_DOUBLE);
+          }
           else {
             ASSERT(false, std::string("Unknown data type!"));
           }
@@ -238,6 +241,35 @@ namespace mtca4u {
           // return as std::vector after check
           ASSERT(res.error() == 0, std::string("Error reading property ")+name);
           std::vector<float> val;
+          for(int i=0; i<res.length(); i++) val.push_back(res.get_float(i));
+          return val;
+      }
+
+      /**********************************************************************************************************************/
+      /** get a DOOCS property with double array type
+       *  "name" is the property name in the form "//<location>/<property>"
+       */
+      static std::vector<double> doocsGet_doubleArray( const char *name ) {
+          EqAdr ad;
+          EqData ed, res;
+          // obtain location pointer
+          ad.adr(name);
+          EqFct *p = eq_get(&ad);
+          ASSERT(p != NULL, std::string("Could not get location for property ")+name);
+          // for D_BSpectrum: set IIII structure to obtain always the latest buffer (shouldn't hurt for others)
+          IIII iiii;
+          iiii.i1_data = -1;
+          iiii.i2_data = -1;
+          iiii.i3_data = -1;
+          iiii.i4_data = -1;
+          ed.set(&iiii);
+          // obtain values
+          p->lock();
+          p->get(&ad,&ed,&res);
+          p->unlock();
+          // return as std::vector after check
+          ASSERT(res.error() == 0, std::string("Error reading property ")+name);
+          std::vector<double> val;
           for(int i=0; i<res.length(); i++) val.push_back(res.get_float(i));
           return val;
       }
