@@ -19,7 +19,7 @@
 /** Handy assertion macro */
 #define ASSERT( condition, error_message )                                                              \
     if(! (condition) ) {                                                                                \
-      std::cerr << "Assertion failed (" << #condition << "):" << error_message << std::endl;            \
+      std::cerr << "Assertion failed (" << #condition << "): " << error_message << std::endl;            \
       exit(1);                                                                                          \
     }
 
@@ -84,6 +84,9 @@ namespace mtca4u {
           if(typeid(TYPE) == typeid(int)) {
             ed.set_type(DATA_A_INT);
           }
+          else if(typeid(TYPE) == typeid(short)) {
+            ed.set_type(DATA_A_SHORT);
+          }
           else if(typeid(TYPE) == typeid(float)) {
             ed.set_type(DATA_A_FLOAT);
           }
@@ -91,7 +94,7 @@ namespace mtca4u {
             ed.set_type(DATA_A_DOUBLE);
           }
           else {
-            ASSERT(false, std::string("Unknown data type!"));
+            ASSERT(false, std::string("Unknown data type: ")+std::string(typeid(TYPE).name()));
           }
           ed.length(value.size());
 
@@ -106,7 +109,7 @@ namespace mtca4u {
           p->set(&ad,&ed,&res);
           p->unlock();
           // check for error
-          ASSERT(res.error() == 0, std::string("Error writing array property ")+name);
+          ASSERT(res.error() == 0, std::string("Error writing array property ")+name+": "+res.get_string());
       }
 
       /**********************************************************************************************************************/
