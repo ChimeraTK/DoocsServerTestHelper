@@ -82,24 +82,6 @@ namespace mtca4u {
       template<typename TYPE>
       static std::vector<TYPE> doocsGetArray( const char *name );
 
-      /** DEPCRECATED, use templated doocsGet instead. */
-      static int doocsGet_int( const char *name );
-
-      /** DEPCRECATED, use templated doocsGet instead. */
-      static float doocsGet_float( const char *name );
-
-      /** DEPCRECATED, use templated doocsGet instead. */
-      static std::string doocsGet_string( const char *name );
-
-      /** DEPCRECATED, use templated doocsGetArray instead. */
-      static std::vector<int> doocsGet_intArray( const char *name );
-
-      /** DEPCRECATED, use templated doocsGetArray instead. */
-      static std::vector<float> doocsGet_floatArray( const char *name );
-
-      /** DEPCRECATED, use templated doocsGetArray instead. */
-      static std::vector<double> doocsGet_doubleArray( const char *name );
-
     protected:
 
       friend int ::nanosleep(__const struct timespec *__requested_time, struct timespec *__remaining);
@@ -296,42 +278,6 @@ namespace mtca4u {
         ASSERT(false, "Wrong type passed as tempalate argument.");
       }
       return val;
-  }
-
-  /**********************************************************************************************************************/
-
-  int doocsServerTestHelper::doocsGet_int( const char *name ) {
-      return doocsGet<int>(name);
-  }
-
-  /**********************************************************************************************************************/
-
-  float doocsServerTestHelper::doocsGet_float( const char *name ) {
-      return doocsGet<float>(name);
-  }
-
-  /**********************************************************************************************************************/
-
-  std::string doocsServerTestHelper::doocsGet_string( const char *name ) {
-      return doocsGet<std::string>(name);
-  }
-
-  /**********************************************************************************************************************/
-
-  std::vector<int> doocsServerTestHelper::doocsGet_intArray( const char *name ) {
-      return doocsGetArray<int>(name);
-  }
-
-  /**********************************************************************************************************************/
-
-  std::vector<float> doocsServerTestHelper::doocsGet_floatArray( const char *name ) {
-      return doocsGetArray<float>(name);
-  }
-
-  /**********************************************************************************************************************/
-
-  std::vector<double> doocsServerTestHelper::doocsGet_doubleArray( const char *name ) {
-      return doocsGetArray<double>(name);
   }
 
 } /* namespace mtca4u */
