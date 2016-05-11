@@ -37,7 +37,8 @@ namespace mtca4u {
        *  sigusr1 to make sure the server has properly started. Until the server started and processed the first
        *  siguser1, this function will block.
        *  If the optional argument is set to true, DOOCS will not receive any signals via sigwait() to process.
-       *  This allows catching signals via signal handlers (e.g. sigaction). */
+       *  This allows catching signals via signal handlers (e.g. sigaction).
+       *  Note that update() and interrupt_usr1() may be executed a few times before this function returns. */
       static void initialise(bool _doNotProcessSignalsInDoocs = false);
 
       /** trigger doocs to run interrupt_usr1() in all locations and wait until the processing is finished */

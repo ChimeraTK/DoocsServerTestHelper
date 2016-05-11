@@ -27,6 +27,7 @@ extern "C" int nanosleep(__const struct timespec *__requested_time, struct times
     if(doocsServerTestHelper::bootingServer) {
       doocsServerTestHelper::bootingServer = false;
       doocsServerTestHelper::setServerIsStarted.set_value();
+      doocsServerTestHelper::update_mutex.lock();
     }
 
     // call original-equivalent version if requested time does not match the magic signature
@@ -123,6 +124,9 @@ namespace mtca4u {
 
       // change update rate, so nanosleep is detected properly
       server_eq->SetSrvUpdateRate(magic_sleep_time_sec,magic_sleep_time_usec);  // has no effect. why?
+
+      // run update once to make sure everything is properly started
+      runUpdate();
   }
 
   /**********************************************************************************************************************/
