@@ -32,7 +32,7 @@ PROJECT_NAME           = mtca4u-deviceaccess
 # This could be handy for archiving the generated documentation or 
 # if some version control system is used.
 
-PROJECT_NUMBER         = @mtca4u-deviceaccess_VERSION@
+PROJECT_NUMBER         = @mtca4u-doocsServerTestHelper_VERSION@
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description 
 # for a project that appears at the top of each page and should give viewer 
@@ -257,7 +257,7 @@ EXTENSION_MAPPING      =
 # func(std::string) {}). This also makes the inheritance and collaboration 
 # diagrams that involve STL classes more complete and accurate.
 
-BUILTIN_STL_SUPPORT    = NO
+BUILTIN_STL_SUPPORT    = YES
 
 # If you use Microsoft's C++/CLI language, you should set this option to YES to 
 # enable parsing support.
@@ -721,8 +721,7 @@ RECURSIVE              = YES
 # run.
 
 EXCLUDE                = @CMAKE_CURRENT_SOURCE_DIR@/build \
-                         @CMAKE_CURRENT_SOURCE_DIR@/tests \
-                         @CMAKE_CURRENT_SOURCE_DIR@/include
+                         @CMAKE_CURRENT_SOURCE_DIR@/tests
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or 
 # directories that are symbolic links (a Unix file system feature) are excluded 
@@ -750,8 +749,7 @@ EXCLUDE_SYMBOLS        =
 # directories that contain example code fragments that are included (see 
 # the \include command).
 
-EXAMPLE_PATH           = @CMAKE_CURRENT_SOURCE_DIR@/examples \
-                         @CMAKE_CURRENT_SOURCE_DIR@/fileparsers
+EXAMPLE_PATH           = 
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the 
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
