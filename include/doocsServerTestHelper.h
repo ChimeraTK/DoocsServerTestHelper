@@ -150,6 +150,9 @@ namespace mtca4u {
       else if(typeid(TYPE) == typeid(short)) {
         ed.set_type(DATA_A_SHORT);
       }
+      else if(typeid(TYPE) == typeid(long long int) || typeid(TYPE) == typeid(int32_t)) {
+        ed.set_type(DATA_A_LONG);
+      }
       else if(typeid(TYPE) == typeid(float)) {
         ed.set_type(DATA_A_FLOAT);
       }
@@ -269,7 +272,12 @@ namespace mtca4u {
       // copy to vector and return it
       std::vector<TYPE> val;
       if(std::is_integral<TYPE>()) {
-        for(int i=0; i<res.length(); i++) val.push_back(res.get_int(i));
+        if(res.type() != DATA_A_LONG) {
+          for(int i=0; i<res.length(); i++) val.push_back(res.get_int(i));
+        }
+        else {
+          for(int i=0; i<res.length(); i++) val.push_back(res.get_long(i));
+        }
       }
       else if(std::is_floating_point<TYPE>()) {
         for(int i=0; i<res.length(); i++) val.push_back(res.get_float(i));
