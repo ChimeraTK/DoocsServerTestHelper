@@ -12,6 +12,7 @@
 
 #include <mutex>
 #include <future>
+#include <atomic>
 #include <type_traits>
 #include <signal.h>
 
@@ -38,7 +39,10 @@ namespace mtca4u {
        *  siguser1, this function will block.
        *  If the optional argument is set to true, DOOCS will not receive any signals via sigwait() to process.
        *  This allows catching signals via signal handlers (e.g. sigaction).
-       *  Note that update() and interrupt_usr1() may be executed a few times before this function returns. */
+       *  Note that update() and interrupt_usr1() may be executed a few times before this function returns.
+       *  Important: You need to set the update rate in the DOOCS server configuration to the following exact
+       *  values, or your code will hang with a dead lock:
+       *  "SVR.RATE: 57005 48879 0 0" */
       static void initialise(bool _doNotProcessSignalsInDoocs = false);
 
       /** trigger doocs to run interrupt_usr1() in all locations and wait until the processing is finished */
@@ -95,22 +99,18 @@ namespace mtca4u {
       static std::mutex sigusr1_mutex;
       static bool allowSigusr1;
 
-      /** future and promise to synchronise server startup */
-      static std::future<void> serverIsStarted;
-      static std::promise<void> setServerIsStarted;
-
-      /** flag set if the nanosleep() function should set the promise setServerIsStarted */
-      static bool bootingServer;
+      /** flag set if nanosleep() was called for the first time after setting interceptSystemCalls */
+      static std::atomic<bool> serverStarted;
 
       /** magic sleep time to identify the nanosleep to intercept */
       static int magic_sleep_time_sec;
       static int magic_sleep_time_usec;
 
       /** enable intercepting system calls */
-      static bool interceptSystemCalls;
+      static std::atomic<bool> interceptSystemCalls;
 
       /** do not process any signals in DOOCS (to allow installing signal handlers instead) */
-      static bool doNotProcessSignalsInDoocs;
+      static std::atomic<bool> doNotProcessSignalsInDoocs;
 
       /** internal event counter */
       static int event;
