@@ -64,11 +64,9 @@ else(DOXYGEN_FOUND)
   message("Doxygen not found, documentation will not be build.")
 endif(DOXYGEN_FOUND)
 
-#Install the library and the executables
-install(TARGETS ${PROJECT_NAME}
-        RUNTIME DESTINATION bin
-	    LIBRARY DESTINATION lib
-  )
+#Install the library and the header files
+install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/${PROJECT_NAME})
 
 # generate cmake config so other projects can find this library
 set(${PROJECT_NAME}_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include ${DOOCS_INCLUDE_DIRS}")
@@ -77,15 +75,6 @@ set(${PROJECT_NAME}_LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/lib ${DOOCS_LIBRARY_DI
 set(${PROJECT_NAME}_CXX_FLAGS "${DOOCS_CXX_FLAGS}")
 set(${PROJECT_NAME}_LINKER_FLAGS "${DOOCS_LINK_FLAGS}")
 include(${CMAKE_SOURCE_DIR}/cmake/create_cmake_config_files.cmake)
-
-#all include files go into include/PROJECT_NAME
-#The exclusion of ${PROJECT_NAME} prevents the recursive installation of the files just being installed.
-#The original headers are in include/*.h, the installed ones in include/PROJECT_NAME/*.h.
-install(DIRECTORY ${${PROJECT_NAME}_INCLUDE_DIRS} DESTINATION include/${PROJECT_NAME}
-          FILES_MATCHING PATTERN "*.h" 
-	  PATTERN ".svn" EXCLUDE
-	  PATTERN "${PROJECT_NAME}" EXCLUDE
-	  )
 
 # The instructions to create a debian package are loaded from a separate file
 #include(${CMAKE_SOURCE_DIR}/cmake/prepare_debian_package.cmake)
