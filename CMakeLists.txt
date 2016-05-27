@@ -70,47 +70,13 @@ install(TARGETS ${PROJECT_NAME}
 	    LIBRARY DESTINATION lib
   )
 
-#create the config files by filling the correct variables into the template (*.cmake.in)
-#All variables @VARIABLE@ are replaced with the current values
-
-#some variables we need for regular Makefiles, for which we also provide the config
-set(${PROJECT_NAME}_CPPFLAGS "${${PROJECT_NAME}_CPPFLAGS} -I${CMAKE_INSTALL_PREFIX}/include ")
-set(${PROJECT_NAME}_LDFLAGS "-L${CMAKE_INSTALL_PREFIX}/lib -Wl,--no-as-needed -l${PROJECT_NAME} ")
-#MATLABs mex cannot deal with the rpath and C+=11 flags, so we provide special flags
-set(${PROJECT_NAME}_MEXFLAGS "-I${CMAKE_INSTALL_PREFIX}/include ${${PROJECT_NAME}_LDFLAGS} ")
-#only now we extend the LDFLAGS to its final value, including the runpath
-set(${PROJECT_NAME}_LDFLAGS "${${PROJECT_NAME}_LDFLAGS} -Wl,-rpath=${CMAKE_INSTALL_PREFIX}/lib,--enable-new-dtags ")
-
-# header file used to identify the presence of the package in a certain include directory
-set(${PROJECT_NAME}_REFERENCE_HEADER "mtca4u-doocsServerTestHelper/doocsServerTestHelper.h")
-
-#We have nested @-statements, so we have to parse twice
-configure_file(cmake/PROJECT_NAMEConfig.cmake.in.in
-  "${PROJECT_BINARY_DIR}/cmake/${PROJECT_NAME}Config.cmake.in" @ONLY)
-configure_file(${PROJECT_BINARY_DIR}/cmake/${PROJECT_NAME}Config.cmake.in
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" @ONLY)
-
-configure_file(cmake/PROJECT_NAMEConfigVersion.cmake.in.in
-  "${PROJECT_BINARY_DIR}/cmake/${PROJECT_NAME}ConfigVersion.cmake.in" @ONLY)
-configure_file(${PROJECT_BINARY_DIR}/cmake/${PROJECT_NAME}ConfigVersion.cmake.in
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" @ONLY)
- 
-configure_file(cmake/PROJECT_NAME-config.in.in
-  "${PROJECT_BINARY_DIR}/cmake/${PROJECT_NAME}-config.in" @ONLY)
-configure_file(${PROJECT_BINARY_DIR}/cmake/${PROJECT_NAME}-config.in
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config" @ONLY)
-
-configure_file(cmake/FindPROJECT_NAME.cmake.in
-  "${PROJECT_BINARY_DIR}/Find${PROJECT_NAME}.cmake" @ONLY)
-
-# Install the ..Config.cmake and ..ConfigVersion.cmake
-install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" 
-  "${PROJECT_BINARY_DIR}/Find${PROJECT_NAME}.cmake"
-  DESTINATION share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/Modules COMPONENT dev)
-
-install(PROGRAMS "${PROJECT_BINARY_DIR}/${PROJECT_NAME}-config"
-  DESTINATION bin COMPONENT dev)
+# generate cmake config so other projects can find this library
+set(${PROJECT_NAME}_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include ${DOOCS_INCLUDE_DIRS}")
+set(${PROJECT_NAME}_LIBRARIES "${PROJECT_NAME} ${DOOCS_LIBRARIES}")
+set(${PROJECT_NAME}_LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/lib ${DOOCS_LIBRARY_DIRS}")
+set(${PROJECT_NAME}_CPPFLAGS "${DOOCS_CXX_FLAGS}")
+set(${PROJECT_NAME}_LDFLAGS "${DOOCS_LINK_FLAGS}")
+include(${CMAKE_SOURCE_DIR}/cmake/create_cmake_config_files.cmake)
 
 #all include files go into include/PROJECT_NAME
 #The exclusion of ${PROJECT_NAME} prevents the recursive installation of the files just being installed.
