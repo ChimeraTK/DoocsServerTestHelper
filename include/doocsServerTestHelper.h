@@ -180,28 +180,6 @@ namespace mtca4u {
 
   /**********************************************************************************************************************/
 
-  void doocsServerTestHelper::doocsSetSpectrum( const std::string &name, const std::vector<float> &value ) {
-      EqAdr ad;
-      EqData ed, res;
-      // fill spectrum data structure
-      SPECTRUM spectrum;
-      spectrum.d_spect_array.d_spect_array_len = value.size();
-      spectrum.d_spect_array.d_spect_array_val = (float*) value.data();   // casts const-ness away, but will not be modified (hopefully)
-      ed.set(&spectrum);
-      // obtain location pointer
-      ad.adr(name.c_str());
-      EqFct *p = eq_get(&ad);
-      ASSERT(p != NULL, std::string("Could not get location for property ")+name);
-      // set spectrum
-      p->lock();
-      p->set(&ad,&ed,&res);
-      p->unlock();
-      // check for error
-      ASSERT(res.error() == 0, std::string("Error writing spectrum property ")+name);
-  }
-
-  /**********************************************************************************************************************/
-
   template<typename TYPE>
   TYPE doocsServerTestHelper::doocsGet( const char *name ) {
       EqAdr ad;
@@ -229,22 +207,7 @@ namespace mtca4u {
   /**********************************************************************************************************************/
 
   template<>
-  std::string doocsServerTestHelper::doocsGet<std::string>( const char *name ) {
-      EqAdr ad;
-      EqData ed, res;
-      // obtain location pointer
-      ad.adr(name);
-      EqFct *p = eq_get(&ad);
-      ASSERT(p != NULL, std::string("Could not get location for property ")+name);
-      // obtain value
-      p->lock();
-      p->get(&ad,&ed,&res);
-      p->unlock();
-      // check for errors
-      ASSERT(res.error() == 0, std::string("Error reading property ")+name);
-      // return requested type
-      return res.get_string();
-  }
+  std::string doocsServerTestHelper::doocsGet<std::string>( const char *name );
 
   /**********************************************************************************************************************/
 
