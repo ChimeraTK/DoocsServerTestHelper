@@ -86,6 +86,10 @@ namespace mtca4u {
       template<typename TYPE>
       static std::vector<TYPE> doocsGetArray( const char *name );
 
+      /** magic sleep time to identify the nanosleep to intercept */
+      const static int magic_sleep_time_sec;
+      const static int magic_sleep_time_usec;
+
     protected:
 
       friend int ::nanosleep(__const struct timespec *__requested_time, struct timespec *__remaining);
@@ -101,10 +105,6 @@ namespace mtca4u {
 
       /** flag set if nanosleep() was called for the first time after setting interceptSystemCalls */
       static std::atomic<bool> serverStarted;
-
-      /** magic sleep time to identify the nanosleep to intercept */
-      static int magic_sleep_time_sec;
-      static int magic_sleep_time_usec;
 
       /** enable intercepting system calls */
       static std::atomic<bool> interceptSystemCalls;

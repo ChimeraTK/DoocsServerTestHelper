@@ -105,8 +105,8 @@ namespace mtca4u {
   std::atomic<bool> doocsServerTestHelper::interceptSystemCalls(false);
   std::atomic<bool> doocsServerTestHelper::serverStarted(false);
   std::atomic<bool> doocsServerTestHelper::doNotProcessSignalsInDoocs(false);
-  int doocsServerTestHelper::magic_sleep_time_sec = 57005; // 0xDEAD
-  int doocsServerTestHelper::magic_sleep_time_usec = 48879; // 0xBEEF
+  const int doocsServerTestHelper::magic_sleep_time_sec = 57005; // 0xDEAD
+  const int doocsServerTestHelper::magic_sleep_time_usec = 48879; // 0xBEEF
   std::mutex doocsServerTestHelper::update_mutex;
   std::mutex doocsServerTestHelper::sigusr1_mutex;
 
