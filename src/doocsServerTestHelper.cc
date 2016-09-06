@@ -26,16 +26,27 @@ extern EqFctSvr *server_eq;
 extern "C" int nanosleep(__const struct timespec *__requested_time, struct timespec *__remaining) {
 
     // call original-equivalent version if requested time does not match the magic signature
-    if(!doocsServerTestHelper::interceptSystemCalls                                   ||
-        __requested_time->tv_sec  != doocsServerTestHelper::magic_sleep_time_sec      ||
+    if(__requested_time->tv_sec  != doocsServerTestHelper::magic_sleep_time_sec      ||
        __requested_time->tv_nsec != doocsServerTestHelper::magic_sleep_time_usec*1000    ) {
-      return clock_nanosleep(CLOCK_MONOTONIC,0,__requested_time,__remaining);
+      return clock_nanosleep(CLOCK_MONOTONIC, 0, __requested_time, __remaining);
+    }
+
+    // if timing system is not yet initialised, sleep for 1 second
+    if(!doocsServerTestHelper::interceptSystemCalls) {
+      struct timespec tv;
+      tv.tv_sec = 1;
+      tv.tv_nsec = 0;
+      return clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, __remaining);
     }
 
     // if this is the first call, acquire lock and set flag that the server has been started
     if(!doocsServerTestHelper::serverStarted) {
       doocsServerTestHelper::serverStarted = true;
       doocsServerTestHelper::update_mutex.lock();
+      doocsServerTestHelper::sigusr1_mutex.lock();
+      doocsServerTestHelper::allowUpdate = false;
+      doocsServerTestHelper::allowSigusr1 = false;
+      doocsServerTestHelper::sigusr1_mutex.unlock();
     }
 
     // magic signature found: wait until update requested via mutex
@@ -54,7 +65,8 @@ extern "C" int nanosleep(__const struct timespec *__requested_time, struct times
 extern "C" int sigwait(__const sigset_t *__restrict __set, int *__restrict __sig) {
 
     // call original-equivalent version if SIGUSR1 is not in the set
-    if(!doocsServerTestHelper::interceptSystemCalls || !sigismember(__set, SIGUSR1)) {
+    if( !doocsServerTestHelper::interceptSystemCalls || !doocsServerTestHelper::serverStarted ||
+        !sigismember(__set, SIGUSR1) ) {
       if(!doocsServerTestHelper::doNotProcessSignalsInDoocs) {
         siginfo_t __siginfo;
         int iret = sigwaitinfo(__set, &__siginfo);
@@ -110,12 +122,16 @@ namespace mtca4u {
       interceptSystemCalls = true;
       doNotProcessSignalsInDoocs = _doNotProcessSignalsInDoocs;
 
+      sigusr1_mutex.unlock();
+
       // wait until server properly started (i.e. nanosleep() called for the first time)
       do {
         update_mutex.unlock();
         usleep(1);
         update_mutex.lock();
       } while(!serverStarted);
+
+      sigusr1_mutex.lock();
 
       // run update once to make sure everything is properly started
       runUpdate();
