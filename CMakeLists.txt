@@ -8,39 +8,23 @@ set(${PROJECT_NAME}_MINOR_VERSION 03)
 set(${PROJECT_NAME}_PATCH_VERSION 00)
 include(cmake/set_version_numbers.cmake)
 
-
-#Moderate version of the compiler flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wextra -ansi -Wuninitialized")
-
-#use -DCMAKE_BUILD_TYPE=Debug in your cmake command to turn on the coverage option
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 --coverage")
-
 # set c++ 11 support:
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-if(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    set(${PROJECT_NAME}_CPPFLAGS "${${PROJECT_NAME}_CPPFLAGS} -std=c++11")
-    set(${PROJECT_NAME}_CMAKE_CXX_FLAGS "${${PROJECT_NAME}_CMAKE_CXX_FLAGS} -std=c++11")
-elseif(COMPILER_SUPPORTS_CXX0X)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-    set(${PROJECT_NAME}_CPPFLAGS "${${PROJECT_NAME}_CPPFLAGS} -std=c++0x")
-    set(${PROJECT_NAME}_CMAKE_CXX_FLAGS "${${PROJECT_NAME}_CMAKE_CXX_FLAGS} -std=c++0x")
-else()
-    message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
-endif()
+include(cmake/enable_cxx11_support.cmake)
 
 # linker flags
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed -Wl,--export-dynamic")
 
-FIND_PACKAGE(DOOCS 18.10 REQUIRED)
-include_directories(SYSTEM ${DOOCS_INCLUDE_DIRS})
-link_directories(${DOOCS_LIBRARY_DIRS})
+# dependencies
+include(cmake/add_dependency.cmake)
+add_dependency(DOOCS 18.10 REQUIRED)
 
+find_package(Boost COMPONENTS unit_test_framework REQUIRED)
+
+# compiler flags etc.
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wextra -Wuninitialized")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 --coverage")
 include_directories(${CMAKE_SOURCE_DIR}/include)
 set(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/include/)
-
 aux_source_directory(${CMAKE_SOURCE_DIR}/src library_sources)
 
 # C++ library
@@ -49,6 +33,17 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${${PROJECT_NAME}_FULL_
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS ${DOOCS_CXX_FLAGS})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-Wl,--no-as-needed ${DOOCS_LINK_FLAGS}")
 target_link_libraries(${PROJECT_NAME} ${DOOCS_LIBRARIES})
+
+# Unit tests
+ENABLE_TESTING()
+aux_source_directory(${CMAKE_SOURCE_DIR}/tests/executables_src testExecutables)
+foreach( testExecutableSrcFile ${testExecutables})
+  #NAME_WE means the base name without path and (longest) extension
+  get_filename_component(excutableName ${testExecutableSrcFile} NAME_WE)
+  add_executable(${excutableName} ${testExecutableSrcFile})
+  target_link_libraries(${excutableName} ${PROJECT_NAME})
+  add_test(${excutableName} ${excutableName})
+endforeach( testExecutableSrcFile )
 
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen)
@@ -75,6 +70,3 @@ set(${PROJECT_NAME}_LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/lib ${DOOCS_LIBRARY_DI
 set(${PROJECT_NAME}_CXX_FLAGS "${DOOCS_CXX_FLAGS}")
 set(${PROJECT_NAME}_LINKER_FLAGS "${DOOCS_LINK_FLAGS}")
 include(${CMAKE_SOURCE_DIR}/cmake/create_cmake_config_files.cmake)
-
-# The instructions to create a debian package are loaded from a separate file
-#include(${CMAKE_SOURCE_DIR}/cmake/prepare_debian_package.cmake)
