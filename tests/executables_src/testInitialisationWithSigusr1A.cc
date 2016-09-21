@@ -8,13 +8,21 @@ void HelperTest::testRoutineBody() {
   allowUpdate();    // the third nanosleep() is entered in/right after initialise() and awaits the next runUpdate()
   usleep(100000);   // make sure we entered the first nanosleep before the call to initialise()
 
-  // now initialise the timing system
-  std::cout << "DoocsServerTestHelper::initialise() ->" << std::endl;
-  DoocsServerTestHelper::initialise();
-  std::cout << "<- DoocsServerTestHelper::initialise()" << std::endl;
+  // start the initialisation in the background. it cannot complete since we do not yet enter sigwait in the sigusr1 thread)
+  std::thread t([](){
+    std::cout << "DoocsServerTestHelper::initialise() ->" << std::endl;
+    DoocsServerTestHelper::initialise();
+    std::cout << "<- DoocsServerTestHelper::initialise()" << std::endl;
+  });
 
-  // let the thread execute sigwait once (it will stay in this first call after initialise())
+  // let the thread execute sigwait once (this call to sigwait will be the normal sigwait receiving the SIGUSR1 from initialise())
   allowSigusr1();
+
+  // let the thread execute sigwait a second time (will stay in this sigwait after initialise())
+  allowSigusr1();
+
+  // now the initialisation must be able to complete
+  t.join();
 
   // check that nanosleep has been executed twice now
   waitUpdate();

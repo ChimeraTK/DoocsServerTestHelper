@@ -5,7 +5,7 @@ void HelperTest::testRoutineBody() {
   // start the initialisation in the background. it cannot complete since we do not yet enter nanosleep in the update thread)
   std::thread t([](){
     std::cout << "DoocsServerTestHelper::initialise() ->" << std::endl;
-    DoocsServerTestHelper::initialise();
+    DoocsServerTestHelper::initialise(false,false);
     std::cout << "<- DoocsServerTestHelper::initialise()" << std::endl;
   });
 

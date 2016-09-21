@@ -19,6 +19,9 @@ void HelperTest::testRoutineBody() {
   // now let the update thread enter nanosleep another time, so initialise() can complete
   allowUpdate();
 
+  // let the thread execute sigwait once (this call to sigwait will be the normal sigwait receiving the SIGUSR1 from initialise())
+  allowSigusr1();
+
   // now the initialisation must be able to complete
   t.join();
 

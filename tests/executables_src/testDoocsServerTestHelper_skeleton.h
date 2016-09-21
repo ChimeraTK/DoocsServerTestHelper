@@ -205,7 +205,6 @@ void HelperTest::testRoutine() {
   sigset_t set;
   sigemptyset(&set);
   sigaddset(&set, SIGUSR1);
-  //sigaddset(&set, SIGINT);
   sigprocmask(SIG_BLOCK, &set, NULL);
   pthread_sigmask(SIG_BLOCK, &set, NULL);
 

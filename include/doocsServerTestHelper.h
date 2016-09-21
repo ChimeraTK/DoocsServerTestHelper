@@ -41,7 +41,7 @@ class DoocsServerTestHelper {
      *
      *  The second optional argument, useSigUsr1, must be set to false, if the server does not initialise the
      *  interrupt_usr1 system by calling setup_interrupt_usr1(). If this argument is set to true when the server did not
-     *  call setup_interrupt_usr1(), the server will terminate (SIGUSR1 is received but not caught).
+     *  call setup_interrupt_usr1(), the server will hang forever.
      *
      *  Note that update() and interrupt_usr1() may be executed a few times before this function returns.
      *  Important: You need to set the update rate in the DOOCS server configuration to the following exact
@@ -107,8 +107,11 @@ class DoocsServerTestHelper {
     static std::mutex sigusr1_mutex;
     static std::atomic<bool> allowSigusr1;
 
-    /** flag set if nanosleep() was called for the first time after setting interceptSystemCalls */
+    /** flag set if nanosleep() was called for the first time *after* setting interceptSystemCalls */
     static std::atomic<bool> serverStarted;
+
+    /** flag set if sigwait() was called for the first time (regardless interceptSystemCalls) */
+    static std::atomic<bool> serverStartedSigUsr1;
 
     /** enable intercepting system calls */
     static std::atomic<bool> interceptSystemCalls;
