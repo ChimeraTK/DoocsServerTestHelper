@@ -10,7 +10,7 @@ void HelperTest::testRoutineBody() {
 
   // now initialise the timing system
   std::cout << "DoocsServerTestHelper::initialise() ->" << std::endl;
-  DoocsServerTestHelper::initialise(false,false);
+  DoocsServerTestHelper::initialise();
   std::cout << "<- DoocsServerTestHelper::initialise()" << std::endl;
 
   // check that nanosleep has been executed twice now

@@ -36,18 +36,14 @@ class DoocsServerTestHelper {
      *  update() to make sure the server has properly started. Until the server started and processed the first
      *  update(), this function will block.
      *
-     *  If the first optional argument, doNotProcessSignalsInDoocs,  is set to true, DOOCS will not receive any signals
+     *  If the optional argument, doNotProcessSignalsInDoocs,  is set to true, DOOCS will not receive any signals
      *  via sigwait() to process. This allows catching signals via signal handlers (e.g. sigaction).
-     *
-     *  The second optional argument, useSigUsr1, must be set to false, if the server does not initialise the
-     *  interrupt_usr1 system by calling setup_interrupt_usr1(). If this argument is set to true when the server did not
-     *  call setup_interrupt_usr1(), the server will hang forever.
      *
      *  Note that update() and interrupt_usr1() may be executed a few times before this function returns.
      *  Important: You need to set the update rate in the DOOCS server configuration to the following exact
      *  values, or your code will hang with a dead lock:
      *  "SVR.RATE: 57005 48879 0 0" */
-    static void initialise(bool doNotProcessSignalsInDoocs = false, bool useSigUsr1 = true);
+    static void initialise(bool doNotProcessSignalsInDoocs = false);
 
     /** trigger doocs to run interrupt_usr1() in all locations and wait until the processing is finished */
     static void runSigusr1();
@@ -109,9 +105,6 @@ class DoocsServerTestHelper {
 
     /** flag set if nanosleep() was called for the first time *after* setting interceptSystemCalls */
     static std::atomic<bool> serverStarted;
-
-    /** flag set if sigwait() was called for the first time (regardless interceptSystemCalls) */
-    static std::atomic<bool> serverStartedSigUsr1;
 
     /** enable intercepting system calls */
     static std::atomic<bool> interceptSystemCalls;

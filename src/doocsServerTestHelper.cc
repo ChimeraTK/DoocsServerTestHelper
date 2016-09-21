@@ -57,7 +57,6 @@ extern "C" int nanosleep(__const struct timespec *__requested_time, struct times
 /**********************************************************************************************************************/
 
 extern "C" int sigwait(__const sigset_t *__restrict __set, int *__restrict __sig) {
-    DoocsServerTestHelper::serverStartedSigUsr1 = true;
 
     // call original-equivalent version if SIGUSR1 is not in the set
     if( !DoocsServerTestHelper::interceptSystemCalls || !DoocsServerTestHelper::serverStarted ||
@@ -97,7 +96,6 @@ std::atomic<bool> DoocsServerTestHelper::allowUpdate(false);
 std::atomic<bool> DoocsServerTestHelper::allowSigusr1(false);
 std::atomic<bool> DoocsServerTestHelper::interceptSystemCalls(false);
 std::atomic<bool> DoocsServerTestHelper::serverStarted(false);
-std::atomic<bool> DoocsServerTestHelper::serverStartedSigUsr1(false);
 std::atomic<bool> DoocsServerTestHelper::doNotProcessSignalsInDoocs(false);
 const int DoocsServerTestHelper::magic_sleep_time_sec = 57005; // 0xDEAD
 const int DoocsServerTestHelper::magic_sleep_time_usec = 48879; // 0xBEEF
@@ -106,7 +104,7 @@ std::mutex DoocsServerTestHelper::sigusr1_mutex;
 
 /**********************************************************************************************************************/
 
-void DoocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs, bool useSigUsr1) {
+void DoocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs) {
 
     std::cout << "DoocsServerTestHelper::intialise(): Setting up virtual timing system..." << std::endl;
 
@@ -135,14 +133,8 @@ void DoocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs, bool us
     runUpdate();
 
     // send ourselves SIGUSR1 to leave the sigwait we might have entered already in the sigusr1 thread
-    if(useSigUsr1) {
-      std::cout << "DoocsServerTestHelper::intialise(): Initialising the virtual interrupt_usr1 system..." << std::endl;
-      while(!serverStartedSigUsr1) usleep(100);
-      kill(getpid(), SIGUSR1);
-    }
-    else {
-      std::cout << "DoocsServerTestHelper::intialise(): Virtual interrupt_usr1 system is not initialised by request..." << std::endl;
-    }
+    signal(SIGUSR1, SIG_IGN);
+    kill(getpid(), SIGUSR1);
 
     std::cout << "DoocsServerTestHelper::intialise(): Initialisation complete!" << std::endl;
 
