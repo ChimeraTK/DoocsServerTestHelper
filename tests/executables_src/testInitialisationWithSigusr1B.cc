@@ -4,7 +4,7 @@ void HelperTest::testRoutineBody() {
 
   // let the thread execute sigwait once (it shall be in this first call before initialise() and will stay there after initialise())
   allowSigusr1();
-  sleep(1);
+  usleep(100000);
 
   // let the thread execute nanosleep three times (it will stay in the third call after initialise())
   allowUpdate();    // the first nanosleep() will be entered before initialise() is called and thus will just sleep 1 second

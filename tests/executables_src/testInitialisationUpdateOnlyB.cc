@@ -10,7 +10,7 @@ void HelperTest::testRoutineBody() {
   });
 
   // wait some time, then enter nanosleep in the update thread
-  sleep(1);
+  usleep(100000);
   allowUpdate();
 
   // initialise will execute update once, so wait until nanosleep has finished the first time
