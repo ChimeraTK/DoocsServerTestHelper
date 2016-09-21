@@ -95,11 +95,11 @@ class DoocsServerTestHelper {
 
     /** mutex and flag to trigger update() */
     static std::mutex update_mutex;
-    static bool allowUpdate;
+    static std::atomic<bool> allowUpdate;
 
     /** mutex and flag to trigger interrupt_usr1() */
     static std::mutex sigusr1_mutex;
-    static bool allowSigusr1;
+    static std::atomic<bool> allowSigusr1;
 
     /** flag set if nanosleep() was called for the first time after setting interceptSystemCalls */
     static std::atomic<bool> serverStarted;

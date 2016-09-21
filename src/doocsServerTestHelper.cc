@@ -41,10 +41,6 @@ extern "C" int nanosleep(__const struct timespec *__requested_time, struct times
     if(!DoocsServerTestHelper::serverStarted) {
       DoocsServerTestHelper::serverStarted = true;
       DoocsServerTestHelper::update_mutex.lock();
-      DoocsServerTestHelper::sigusr1_mutex.lock();
-      DoocsServerTestHelper::allowUpdate = false;
-      DoocsServerTestHelper::allowSigusr1 = false;
-      DoocsServerTestHelper::sigusr1_mutex.unlock();
     }
 
     // magic signature found: wait until update requested via mutex
@@ -96,8 +92,8 @@ extern "C" int sigwait(__const sigset_t *__restrict __set, int *__restrict __sig
 
 /**********************************************************************************************************************/
 
-bool DoocsServerTestHelper::allowUpdate = false;
-bool DoocsServerTestHelper::allowSigusr1 = false;
+std::atomic<bool> DoocsServerTestHelper::allowUpdate(false);
+std::atomic<bool> DoocsServerTestHelper::allowSigusr1(false);
 std::atomic<bool> DoocsServerTestHelper::interceptSystemCalls(false);
 std::atomic<bool> DoocsServerTestHelper::serverStarted(false);
 std::atomic<bool> DoocsServerTestHelper::doNotProcessSignalsInDoocs(false);
@@ -115,9 +111,10 @@ void DoocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs) {
     update_mutex.lock();
 
     // enable intercepting system calls
+    allowUpdate = false;
+    allowSigusr1 = false;
     interceptSystemCalls = true;
     doNotProcessSignalsInDoocs = _doNotProcessSignalsInDoocs;
-
     sigusr1_mutex.unlock();
 
     // wait until server properly started (i.e. nanosleep() called for the first time)
@@ -129,8 +126,12 @@ void DoocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs) {
 
     sigusr1_mutex.lock();
 
+    // send ourselves SIGUSR1 to leave the sigwait we might have entered already in the sigusr1 thread
+    kill(getpid(), SIGUSR1);
+
     // run update once to make sure everything is properly started
     runUpdate();
+
 }
 
 /**********************************************************************************************************************/
