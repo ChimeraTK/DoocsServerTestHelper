@@ -104,7 +104,9 @@ std::mutex DoocsServerTestHelper::sigusr1_mutex;
 
 /**********************************************************************************************************************/
 
-void DoocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs) {
+void DoocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs, bool useSigUsr1) {
+
+    std::cout << "DoocsServerTestHelper::intialise(): Setting up virtual timing system..." << std::endl;
 
     // acquire locks
     sigusr1_mutex.lock();
@@ -127,10 +129,18 @@ void DoocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs) {
     sigusr1_mutex.lock();
 
     // send ourselves SIGUSR1 to leave the sigwait we might have entered already in the sigusr1 thread
-    kill(getpid(), SIGUSR1);
+    if(useSigUsr1) {
+      std::cout << "DoocsServerTestHelper::intialise(): Initialising the virtual interrupt_usr1 system..." << std::endl;
+      kill(getpid(), SIGUSR1);
+    }
+    else {
+      std::cout << "DoocsServerTestHelper::intialise(): Virtual interrupt_usr1 system is not initialised by request..." << std::endl;
+    }
 
     // run update once to make sure everything is properly started
     runUpdate();
+
+    std::cout << "DoocsServerTestHelper::intialise(): Initialisation complete!" << std::endl;
 
 }
 

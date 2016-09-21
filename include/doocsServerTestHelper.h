@@ -33,15 +33,21 @@ class DoocsServerTestHelper {
   public:
 
     /** initialise timing control and enable intercepting the required system calls. This will trigger a first
-     *  sigusr1 to make sure the server has properly started. Until the server started and processed the first
-     *  siguser1, this function will block.
-     *  If the optional argument is set to true, DOOCS will not receive any signals via sigwait() to process.
-     *  This allows catching signals via signal handlers (e.g. sigaction).
+     *  update() to make sure the server has properly started. Until the server started and processed the first
+     *  update(), this function will block.
+     *
+     *  If the first optional argument, doNotProcessSignalsInDoocs,  is set to true, DOOCS will not receive any signals
+     *  via sigwait() to process. This allows catching signals via signal handlers (e.g. sigaction).
+     *
+     *  The second optional argument, useSigUsr1, must be set to false, if the server does not initialise the
+     *  interrupt_usr1 system by calling setup_interrupt_usr1(). If this argument is set to true when the server did not
+     *  call setup_interrupt_usr1(), the server will terminate (SIGUSR1 is received but not caught).
+     *
      *  Note that update() and interrupt_usr1() may be executed a few times before this function returns.
      *  Important: You need to set the update rate in the DOOCS server configuration to the following exact
      *  values, or your code will hang with a dead lock:
      *  "SVR.RATE: 57005 48879 0 0" */
-    static void initialise(bool _doNotProcessSignalsInDoocs = false);
+    static void initialise(bool doNotProcessSignalsInDoocs = false, bool useSigUsr1 = true);
 
     /** trigger doocs to run interrupt_usr1() in all locations and wait until the processing is finished */
     static void runSigusr1();
