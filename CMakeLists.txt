@@ -16,7 +16,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed -
 
 # dependencies
 include(cmake/add_dependency.cmake)
-add_dependency(DOOCS 18.10 REQUIRED)
+add_dependency(DOOCS 18.10 server REQUIRED)
 
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
