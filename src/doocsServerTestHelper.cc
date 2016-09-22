@@ -59,8 +59,7 @@ extern "C" int nanosleep(__const struct timespec *__requested_time, struct times
 extern "C" int sigwait(__const sigset_t *__restrict __set, int *__restrict __sig) {
 
     // call original-equivalent version if SIGUSR1 is not in the set
-    if( !DoocsServerTestHelper::interceptSystemCalls || !DoocsServerTestHelper::serverStarted ||
-        !sigismember(__set, SIGUSR1) ) {
+    if( !sigismember(__set, SIGUSR1 ) ) {
       if(!DoocsServerTestHelper::doNotProcessSignalsInDoocs) {
         siginfo_t __siginfo;
         int iret = sigwaitinfo(__set, &__siginfo);
@@ -72,6 +71,25 @@ extern "C" int sigwait(__const sigset_t *__restrict __set, int *__restrict __sig
         sigset_t ___set;
         sigemptyset(&___set);
         int iret = sigwaitinfo(&___set, &__siginfo);
+        *__sig = __siginfo.si_signo;
+        return iret;
+      }
+    }
+
+    // not (yet) initialised: call original-equivalent version
+    if( !DoocsServerTestHelper::interceptSystemCalls || !DoocsServerTestHelper::serverStarted ) {
+      // we wait with a 1 second timeout to have a chance to react to later changes of interceptSystemCalls
+      siginfo_t __siginfo;
+      struct timespec tv;
+      tv.tv_sec = 1;
+      tv.tv_nsec = 0;
+      int iret;
+      do {
+        iret = sigtimedwait(__set, &__siginfo, &tv);
+        if(DoocsServerTestHelper::interceptSystemCalls) break;
+      } while(iret == -1 && errno == EAGAIN);
+      // if the timing system was initialised in the mean time, do not yet return here
+      if(DoocsServerTestHelper::interceptSystemCalls) {
         *__sig = __siginfo.si_signo;
         return iret;
       }
@@ -131,10 +149,6 @@ void DoocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs) {
     // run update once to make sure everything is properly started
     std::cout << "DoocsServerTestHelper::intialise(): Running update() for the first time..." << std::endl;
     runUpdate();
-
-    // send ourselves SIGUSR1 to leave the sigwait we might have entered already in the sigusr1 thread
-    signal(SIGUSR1, SIG_IGN);
-    kill(getpid(), SIGUSR1);
 
     std::cout << "DoocsServerTestHelper::intialise(): Initialisation complete!" << std::endl;
 
