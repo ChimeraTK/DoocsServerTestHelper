@@ -21,13 +21,20 @@
 /** Handy assertion macro */
 #define ASSERT( condition, error_message )                                                              \
     if(! (condition) ) {                                                                                \
-      std::cerr << "Assertion failed (" << #condition << "): " << error_message << std::endl;            \
+      std::cerr << "Assertion failed (" << #condition << "): " << error_message << std::endl;           \
       exit(1);                                                                                          \
     }
 
 /** Collection of helper routines to test DOOCS servers: control the DOOCS update() and
  *  interrupt_usr1() functions and access properties directly through pointers (instead of the RPC
  *  interface). The class has only static functions, so there is no need to create an instance.
+ * 
+ *  Warning: When linking against the DoocsServerTestHelper library, nanosleep() and sigwait() will be
+ *  replaced and calls to those functions will be intercepted to wait until the corresponding function
+ *  (runSigusr1() or runUpdate()) has been called by the test code, if the passed arguments match the
+ *  expected signature. If this library is linked against an ordinary DOOCS server without a test routine
+ *  calling those functions, the server will hang in a dead lock situation. Use this library only in
+ *  combination with an appropriate test routine!
  *
  *  Important: You need to set the update rate in the DOOCS server configuration to the following exact
  *  values, or your test will not be able to control update():
