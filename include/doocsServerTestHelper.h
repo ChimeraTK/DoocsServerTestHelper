@@ -27,23 +27,20 @@
 
 /** Collection of helper routines to test DOOCS servers: control the DOOCS update() and
  *  interrupt_usr1() functions and access properties directly through pointers (instead of the RPC
- *  interface). The class has only static functions, so there is no need to create an instance. */
+ *  interface). The class has only static functions, so there is no need to create an instance.
+ *
+ *  Important: You need to set the update rate in the DOOCS server configuration to the following exact
+ *  values, or your test will not be able to control update():
+ *  "SVR.RATE: 57005 48879 0 0" */
+
 class DoocsServerTestHelper {
 
   public:
 
-    /** initialise timing control and enable intercepting the required system calls. This will trigger a first
-     *  update() to make sure the server has properly started. Until the server started and processed the first
-     *  update(), this function will block.
-     *
-     *  If the optional argument, doNotProcessSignalsInDoocs,  is set to true, DOOCS will not receive any signals
+    /** If doNotProcessSignalsInDoocs is set to true, DOOCS will not receive any signals
      *  via sigwait() to process. This allows catching signals via signal handlers (e.g. sigaction).
-     *
-     *  Note that update() and interrupt_usr1() may be executed a few times before this function returns.
-     *  Important: You need to set the update rate in the DOOCS server configuration to the following exact
-     *  values, or your code will hang with a dead lock:
-     *  "SVR.RATE: 57005 48879 0 0" */
-    static void initialise(bool doNotProcessSignalsInDoocs = false);
+     */
+    static void setDoNotProcessSignalsInDoocs(bool doNotProcessSignalsInDoocs = true);
 
     /** trigger doocs to run interrupt_usr1() in all locations and wait until the processing is finished */
     static void runSigusr1();
@@ -102,12 +99,10 @@ class DoocsServerTestHelper {
     /** mutex and flag to trigger interrupt_usr1() */
     static std::mutex sigusr1_mutex;
     static std::atomic<bool> allowSigusr1;
-
-    /** flag set if nanosleep() was called for the first time *after* setting interceptSystemCalls */
-    static std::atomic<bool> serverStarted;
-
-    /** enable intercepting system calls */
-    static std::atomic<bool> interceptSystemCalls;
+    
+    /** unique locks for */
+    static std::unique_lock<std::mutex> update_lock;
+    static std::unique_lock<std::mutex> sigusr1_lock;
 
     /** do not process any signals in DOOCS (to allow installing signal handlers instead) */
     static std::atomic<bool> doNotProcessSignalsInDoocs;

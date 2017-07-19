@@ -29,25 +29,12 @@ extern "C" int nanosleep(__const struct timespec *__requested_time, struct times
       return clock_nanosleep(CLOCK_MONOTONIC, 0, __requested_time, __remaining);
     }
 
-    // if timing system is not yet initialised, sleep for 1 second
-    if(!DoocsServerTestHelper::interceptSystemCalls) {
-      struct timespec tv;
-      tv.tv_sec = 1;
-      tv.tv_nsec = 0;
-      return clock_nanosleep(CLOCK_MONOTONIC, 0, &tv, __remaining);
-    }
-
-    // if this is the first call, acquire lock and set flag that the server has been started
-    if(!DoocsServerTestHelper::serverStarted) {
-      DoocsServerTestHelper::serverStarted = true;
-      DoocsServerTestHelper::update_mutex.lock();
-    }
-
     // magic signature found: wait until update requested via mutex
+    static thread_local std::unique_lock<std::mutex> update_lock{DoocsServerTestHelper::update_mutex};
     do {
-      DoocsServerTestHelper::update_mutex.unlock();
+      update_lock.unlock();
       usleep(1);
-      DoocsServerTestHelper::update_mutex.lock();
+      update_lock.lock();
     } while(!DoocsServerTestHelper::allowUpdate);
     DoocsServerTestHelper::allowUpdate = false;
     return 0;
@@ -60,46 +47,27 @@ extern "C" int sigwait(__const sigset_t *__restrict __set, int *__restrict __sig
 
     // call original-equivalent version if SIGUSR1 is not in the set
     if( !sigismember(__set, SIGUSR1 ) ) {
-      if(!DoocsServerTestHelper::doNotProcessSignalsInDoocs) {
-        siginfo_t __siginfo;
-        int iret = sigwaitinfo(__set, &__siginfo);
-        *__sig = __siginfo.si_signo;
-        return iret;
-      }
-      else {
+      // first wait on the specified signals
+      siginfo_t __siginfo;
+      int iret = sigwaitinfo(__set, &__siginfo);
+      *__sig = __siginfo.si_signo;
+      // if (in the mean time) doNotProcessSignalsInDoocs has been set by the test code, wait on an empty set (-> forever)
+      if(DoocsServerTestHelper::doNotProcessSignalsInDoocs) {
         siginfo_t __siginfo;
         sigset_t ___set;
         sigemptyset(&___set);
-        int iret = sigwaitinfo(&___set, &__siginfo);
+        iret = sigwaitinfo(&___set, &__siginfo);
         *__sig = __siginfo.si_signo;
-        return iret;
       }
-    }
-
-    // not (yet) initialised: call original-equivalent version
-    if( !DoocsServerTestHelper::interceptSystemCalls || !DoocsServerTestHelper::serverStarted ) {
-      // we wait with a 1 second timeout to have a chance to react to later changes of interceptSystemCalls
-      siginfo_t __siginfo;
-      struct timespec tv;
-      tv.tv_sec = 1;
-      tv.tv_nsec = 0;
-      int iret;
-      do {
-        iret = sigtimedwait(__set, &__siginfo, &tv);
-        if(DoocsServerTestHelper::interceptSystemCalls) break;
-      } while(iret == -1 && errno == EAGAIN);
-      // if the timing system was initialised in the mean time, do not yet return here
-      if(DoocsServerTestHelper::interceptSystemCalls) {
-        *__sig = __siginfo.si_signo;
-        return iret;
-      }
+      return iret;
     }
 
     // SIGUSR1 is in the set: wait until sigusr1 reqested via mutex
+    static thread_local std::unique_lock<std::mutex> sigusr1_lock{DoocsServerTestHelper::sigusr1_mutex};
     do {
-      DoocsServerTestHelper::sigusr1_mutex.unlock();
+      sigusr1_lock.unlock();
       usleep(1);
-      DoocsServerTestHelper::sigusr1_mutex.lock();
+      sigusr1_lock.lock();
     } while(!DoocsServerTestHelper::allowSigusr1);
     DoocsServerTestHelper::allowSigusr1 = false;
 
@@ -112,46 +80,18 @@ extern "C" int sigwait(__const sigset_t *__restrict __set, int *__restrict __sig
 
 std::atomic<bool> DoocsServerTestHelper::allowUpdate(false);
 std::atomic<bool> DoocsServerTestHelper::allowSigusr1(false);
-std::atomic<bool> DoocsServerTestHelper::interceptSystemCalls(false);
-std::atomic<bool> DoocsServerTestHelper::serverStarted(false);
 std::atomic<bool> DoocsServerTestHelper::doNotProcessSignalsInDoocs(false);
 const int DoocsServerTestHelper::magic_sleep_time_sec = 57005; // 0xDEAD
 const int DoocsServerTestHelper::magic_sleep_time_usec = 48879; // 0xBEEF
 std::mutex DoocsServerTestHelper::update_mutex;
 std::mutex DoocsServerTestHelper::sigusr1_mutex;
+std::unique_lock<std::mutex> DoocsServerTestHelper::update_lock(DoocsServerTestHelper::update_mutex);
+std::unique_lock<std::mutex> DoocsServerTestHelper::sigusr1_lock(DoocsServerTestHelper::sigusr1_mutex);
 
 /**********************************************************************************************************************/
 
-void DoocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs) {
-
-    std::cout << "DoocsServerTestHelper::intialise(): Setting up virtual timing system..." << std::endl;
-
-    // acquire locks
-    sigusr1_mutex.lock();
-    update_mutex.lock();
-
-    // enable intercepting system calls
-    allowUpdate = false;
-    allowSigusr1 = false;
-    interceptSystemCalls = true;
+void DoocsServerTestHelper::setDoNotProcessSignalsInDoocs(bool _doNotProcessSignalsInDoocs) {
     doNotProcessSignalsInDoocs = _doNotProcessSignalsInDoocs;
-    sigusr1_mutex.unlock();
-
-    // wait until server properly started (i.e. nanosleep() called for the first time)
-    do {
-      update_mutex.unlock();
-      usleep(1);
-      update_mutex.lock();
-    } while(!serverStarted);
-
-    sigusr1_mutex.lock();
-
-    // run update once to make sure everything is properly started
-    std::cout << "DoocsServerTestHelper::intialise(): Running update() for the first time..." << std::endl;
-    runUpdate();
-
-    std::cout << "DoocsServerTestHelper::intialise(): Initialisation complete!" << std::endl;
-
 }
 
 /**********************************************************************************************************************/
@@ -159,9 +99,9 @@ void DoocsServerTestHelper::initialise(bool _doNotProcessSignalsInDoocs) {
 void DoocsServerTestHelper::runSigusr1() {
     allowSigusr1 = true;
     do {
-      sigusr1_mutex.unlock();
+      sigusr1_lock.unlock();
       usleep(1);
-      sigusr1_mutex.lock();
+      sigusr1_lock.lock();
     } while(allowSigusr1);
 }
 
@@ -170,9 +110,9 @@ void DoocsServerTestHelper::runSigusr1() {
 void DoocsServerTestHelper::runUpdate() {
     allowUpdate = true;
     do {
-      update_mutex.unlock();
+      update_lock.unlock();
       usleep(1);
-      update_mutex.lock();
+      update_lock.lock();
     } while(allowUpdate);
 }
 
@@ -183,8 +123,8 @@ void DoocsServerTestHelper::shutdown() {
     usleep(100000);
     allowUpdate = true;
     allowSigusr1 = true;
-    update_mutex.unlock();
-    sigusr1_mutex.unlock();
+    update_lock.unlock();
+    sigusr1_lock.unlock();
 }
 
 /**********************************************************************************************************************/

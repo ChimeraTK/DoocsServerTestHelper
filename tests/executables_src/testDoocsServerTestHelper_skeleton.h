@@ -73,22 +73,28 @@ void HelperTest::sigusr1() {
 
   // initialise the future queue
   std::promise<void> lastPromise;
-  queueLock.lock();
-  qSigusr1Done.push(lastPromise.get_future());
-  queueLock.unlock();
+  {
+    std::lock_guard<std::mutex> lock{queueLock};
+    qSigusr1Done.push(lastPromise.get_future());
+  }
 
   // repeating loop until the termination flag is set
   while(!flagTerminate) {
 
     // wait until the test routine tells us to proceed
     std::cout << "threadSigusr1 waiting..." << std::endl;
-    queueLock.lock();
-    std::future<void> &future = qSigusr1Start.front();
-    queueLock.unlock();
+    std::future<void> future;
+    {
+      std::lock_guard<std::mutex> lock{queueLock};
+      future = std::move(qSigusr1Start.front());
+    }
+    std::cout << "threadSigusr1 waiting (2)..." << std::endl;
     future.get();
-    queueLock.lock();
-    qSigusr1Start.pop();
-    queueLock.unlock();
+    std::cout << "threadSigusr1 waiting (3)..." << std::endl;
+    {
+      std::lock_guard<std::mutex> lock{queueLock};
+      qSigusr1Start.pop();
+    }
     if(flagTerminate) break;
 
     // execute sigwait
@@ -98,9 +104,10 @@ void HelperTest::sigusr1() {
 
     // tell the test routine that sigwait was terminated
     std::promise<void> newPromise = std::promise<void>();
-    queueLock.lock();
-    qSigusr1Done.push(newPromise.get_future());
-    queueLock.unlock();
+    {
+      std::lock_guard<std::mutex> lock{queueLock};
+      qSigusr1Done.push(newPromise.get_future());
+    }
     lastPromise.set_value();
     lastPromise.swap(newPromise);
   }
@@ -114,22 +121,28 @@ void HelperTest::update() {
 
   // initialise the future queue
   std::promise<void> lastPromise;
-  queueLock.lock();
-  qUpdateDone.push(lastPromise.get_future());
-  queueLock.unlock();
+  {
+    std::lock_guard<std::mutex> lock{queueLock};
+    qUpdateDone.push(lastPromise.get_future());
+  }
 
   // repeating loop until the termination flag is set
   while(!flagTerminate) {
 
     // wait until the test routine tells us to proceed
     std::cout << "threadUpdate waiting..." << std::endl;
-    queueLock.lock();
-    std::future<void> &future = qUpdateStart.front();
-    queueLock.unlock();
+    std::future<void> future;
+    {
+      std::lock_guard<std::mutex> lock{queueLock};
+      future = std::move(qUpdateStart.front());
+    }
+    std::cout << "threadUpdate waiting (2)..." << std::endl;
     future.get();
-    queueLock.lock();
-    qUpdateStart.pop();
-    queueLock.unlock();
+    std::cout << "threadUpdate waiting (3)..." << std::endl;
+    {
+      std::lock_guard<std::mutex> lock{queueLock};
+      qUpdateStart.pop();
+    }
     if(flagTerminate) break;
 
     // execute the magic nano sleep
@@ -139,9 +152,10 @@ void HelperTest::update() {
 
     // tell the test routine that nanosleep was terminated
     std::promise<void> newPromise = std::promise<void>();
-    queueLock.lock();
-    qUpdateDone.push(newPromise.get_future());
-    queueLock.unlock();
+    {
+      std::lock_guard<std::mutex> lock{queueLock};
+      qUpdateDone.push(newPromise.get_future());
+    }
     lastPromise.set_value();
     lastPromise.swap(newPromise);
   }
@@ -149,47 +163,51 @@ void HelperTest::update() {
 
 void HelperTest::allowSigusr1() {
   std::cout << "Allow sigusr1..." << std::endl;
-  queueLock.lock();
+  std::lock_guard<std::mutex> lock{queueLock};
   std::promise<void> newPromise = std::promise<void>();
   qSigusr1Start.push(newPromise.get_future());
   lastPromiseSigusr1.set_value();
   lastPromiseSigusr1.swap(newPromise);
-  queueLock.unlock();
   std::cout << "sigusr1 allowed..." << std::endl;
 }
 
 void HelperTest::allowUpdate() {
   std::cout << "Allow update..." << std::endl;
-  queueLock.lock();
+  std::lock_guard<std::mutex> lock{queueLock};
   std::promise<void> newPromise = std::promise<void>();
   qUpdateStart.push(newPromise.get_future());
   lastPromiseUpdate.set_value();
   lastPromiseUpdate.swap(newPromise);
-  queueLock.unlock();
   std::cout << "update allowed..." << std::endl;
 }
 
 void HelperTest::waitSigusr1() {
   std::cout << "Wait for sigusr1 done..." << std::endl;
-  queueLock.lock();
-  std::future<void> &future = qSigusr1Done.front();
-  queueLock.unlock();
+  std::future<void> future;
+  {
+    std::lock_guard<std::mutex> lock{queueLock};
+    future = std::move(qSigusr1Done.front());
+  }
   future.get();
-  queueLock.lock();
-  qSigusr1Done.pop();
-  queueLock.unlock();
+  {
+    std::lock_guard<std::mutex> lock{queueLock};
+    qSigusr1Done.pop();
+  }
   std::cout << "sigusr1 is done." << std::endl;
 }
 
 void HelperTest::waitUpdate() {
   std::cout << "Wait for update done..." << std::endl;
-  queueLock.lock();
-  std::future<void> &future = qUpdateDone.front();
-  queueLock.unlock();
+  std::future<void> future;
+  {
+    std::lock_guard<std::mutex> lock{queueLock};
+    future = std::move(qUpdateDone.front());
+  }
   future.get();
-  queueLock.lock();
-  qUpdateDone.pop();
-  queueLock.unlock();
+  {
+    std::lock_guard<std::mutex> lock{queueLock};
+    qUpdateDone.pop();
+  }
   std::cout << "update is done." << std::endl;
 }
 
