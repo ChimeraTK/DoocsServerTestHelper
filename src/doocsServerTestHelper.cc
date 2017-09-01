@@ -152,7 +152,7 @@ void DoocsServerTestHelper::doocsSetSpectrum( const std::string &name, const std
 /**********************************************************************************************************************/
 
 template<>
-std::string DoocsServerTestHelper::doocsGet<std::string>( const char *name ) {
+std::string DoocsServerTestHelper::doocsGet<std::string>( const std::string & name ) {
     EqAdr ad;
     EqData ed, res;
     // obtain location pointer

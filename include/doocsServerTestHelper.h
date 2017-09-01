@@ -82,13 +82,13 @@ class DoocsServerTestHelper {
      *  "name" is the property name in the form "//<location>/<property>"
      */
     template<typename TYPE>
-    static TYPE doocsGet( const char *name );
+    static TYPE doocsGet( const std::string & name );
 
     /** get an array DOOCS property
      *  "name" is the property name in the form "//<location>/<property>"
      */
     template<typename TYPE>
-    static std::vector<TYPE> doocsGetArray( const char *name );
+    static std::vector<TYPE> doocsGetArray( const std::string & name );
 
     /** magic sleep time to identify the nanosleep to intercept */
     const static int magic_sleep_time_sec;
@@ -183,11 +183,11 @@ void DoocsServerTestHelper::doocsSet( const std::string &name, const std::vector
 /**********************************************************************************************************************/
 
 template<typename TYPE>
-TYPE DoocsServerTestHelper::doocsGet( const char *name ) {
+TYPE DoocsServerTestHelper::doocsGet( const std::string & name ) {
     EqAdr ad;
     EqData ed, res;
     // obtain location pointer
-    ad.adr(name);
+    ad.adr(name.c_str());
     EqFct *p = eq_get(&ad);
     ASSERT(p != NULL, std::string("Could not get location for property ")+name);
     // obtain value
@@ -209,16 +209,16 @@ TYPE DoocsServerTestHelper::doocsGet( const char *name ) {
 /**********************************************************************************************************************/
 
 template<>
-std::string DoocsServerTestHelper::doocsGet<std::string>( const char *name );
+std::string DoocsServerTestHelper::doocsGet<std::string>( const std::string & name );
 
 /**********************************************************************************************************************/
 
 template<typename TYPE>
-std::vector<TYPE> DoocsServerTestHelper::doocsGetArray( const char *name ) {
+std::vector<TYPE> DoocsServerTestHelper::doocsGetArray( const std::string & name ) {
     EqAdr ad;
     EqData ed, res;
     // obtain location pointer
-    ad.adr(name);
+    ad.adr(name.c_str());
     EqFct *p = eq_get(&ad);
     ASSERT(p != NULL, std::string("Could not get location for property ")+name);
     // for D_BSpectrum: set IIII structure to obtain always the latest buffer (shouldn't hurt for others)
