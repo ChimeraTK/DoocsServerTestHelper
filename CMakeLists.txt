@@ -8,8 +8,8 @@ set(${PROJECT_NAME}_MINOR_VERSION 00)
 set(${PROJECT_NAME}_PATCH_VERSION 00)
 include(cmake/set_version_numbers.cmake)
 
-# set c++ 11 support:
-include(cmake/enable_cxx11_support.cmake)
+# set c++ 11 support (or newer):
+include(cmake/enable_latest_cxx_support.cmake)
 
 # linker flags
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed -Wl,--export-dynamic")
