@@ -149,6 +149,33 @@ void DoocsServerTestHelper::doocsSetSpectrum( const std::string &name, const std
     ASSERT(res.error() == 0, std::string("Error writing spectrum property ")+name);
 }
 
+void DoocsServerTestHelper::doocsSetIIII( const std::string &name, const std::vector<int> &value )
+{
+    EqAdr ad;
+    EqData ed, res;
+    ASSERT(value.size() == 4, std::string("Invalid input size, must be 4"));
+
+    // fill IIII data structure
+    IIII iiii;
+    iiii.i1_data = value[0];
+    iiii.i2_data = value[1];
+    iiii.i3_data = value[2];
+    iiii.i4_data = value[3];
+    ed.set(&iiii);
+
+    // obtain location pointer
+    ad.adr(name.c_str());
+    EqFct *p = eq_get(&ad);
+    ASSERT(p != NULL, std::string("Could not get location for property ")+name);
+    // set spectrum
+    p->lock();
+    p->set(&ad,&ed,&res);
+    p->unlock();
+    // check for error
+    ASSERT(res.error() == 0, std::string("Error writing IIII property ")+name);
+}
+
+
 /**********************************************************************************************************************/
 
 template<>

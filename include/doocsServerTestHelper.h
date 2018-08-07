@@ -78,6 +78,12 @@ class DoocsServerTestHelper {
      */
     static void doocsSetSpectrum( const std::string &name, const std::vector<float> &value );
 
+    /** set a DOOCS property - IIII version
+     *  "name" is the property name in the form "//<location>/<property>"
+     *  "value" is the value to be set
+     */
+    static void doocsSetIIII( const std::string &name, const std::vector<int> &value );
+
     /** get a scalar DOOCS property
      *  "name" is the property name in the form "//<location>/<property>"
      */
