@@ -134,6 +134,12 @@ void DoocsServerTestHelper::doocsSetSpectrum( const std::string &name, const std
     EqData ed, res;
     // fill spectrum data structure
     SPECTRUM spectrum;
+    spectrum.comment.comment_len=0;
+    spectrum.comment.comment_val=nullptr;
+    spectrum.tm=0;
+    spectrum.s_start=0;
+    spectrum.s_inc=1.;
+    spectrum.status=0;
     spectrum.d_spect_array.d_spect_array_len = value.size();
     spectrum.d_spect_array.d_spect_array_val = (float*) value.data();   // casts const-ness away, but will not be modified (hopefully)
     ed.set(&spectrum);
