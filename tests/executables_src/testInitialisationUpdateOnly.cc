@@ -1,8 +1,19 @@
 #include "testDoocsServerTestHelper_skeleton.h"
 
+#define CHECK_TIMEOUT(condition, maxMilliseconds)                                                                   \
+    {                                                                                                               \
+      std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();                                  \
+      while(!(condition)) {                                                                                         \
+        bool timeout_reached = (std::chrono::steady_clock::now()-t0) > std::chrono::milliseconds(maxMilliseconds);  \
+        BOOST_CHECK( !timeout_reached );                                                                            \
+        if(timeout_reached) break;                                                                                  \
+        usleep(1000);                                                                                               \
+      }                                                                                                             \
+    }
+
 void HelperTest::testRoutineBody() {
   std::atomic<bool> flag;
-  
+
   // check if nanosleep with different time than the magic number works
   struct timespec nonMagicSleepTime{0, 10};
   nanosleep(&nonMagicSleepTime, NULL);
@@ -21,8 +32,7 @@ void HelperTest::testRoutineBody() {
   usleep(100000);
   BOOST_CHECK(flag == false);
   allowUpdate();
-  usleep(100000);
-  BOOST_CHECK(flag == true);
+  CHECK_TIMEOUT(flag == true, 5000);
   t1.join();
   waitUpdate();
 
@@ -37,11 +47,10 @@ void HelperTest::testRoutineBody() {
   usleep(100000);
   BOOST_CHECK(flag == false);
   allowUpdate();
-  usleep(100000);
-  BOOST_CHECK(flag == true);
+  CHECK_TIMEOUT(flag == true, 5000);
   t2.join();
   waitUpdate();
-  
+
   // check if nanosleep with different time than the magic number works
   struct timespec nonMagicSleepTime2{1, 0};
   nanosleep(&nonMagicSleepTime2, NULL);

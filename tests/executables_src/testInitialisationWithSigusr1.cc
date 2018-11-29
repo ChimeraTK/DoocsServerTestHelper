@@ -1,5 +1,16 @@
 #include "testDoocsServerTestHelper_skeleton.h"
 
+#define CHECK_TIMEOUT(condition, maxMilliseconds)                                                                   \
+    {                                                                                                               \
+      std::chrono::steady_clock::time_point t0 = std::chrono::steady_clock::now();                                  \
+      while(!(condition)) {                                                                                         \
+        bool timeout_reached = (std::chrono::steady_clock::now()-t0) > std::chrono::milliseconds(maxMilliseconds);  \
+        BOOST_CHECK( !timeout_reached );                                                                            \
+        if(timeout_reached) break;                                                                                  \
+        usleep(1000);                                                                                               \
+      }                                                                                                             \
+    }
+
 void HelperTest::testRoutineBody() {
   std::atomic<bool> flag, flag2;
   std::cout << "HelperTest::testRoutineBody() 1" << std::endl;
@@ -19,8 +30,7 @@ void HelperTest::testRoutineBody() {
   usleep(100000);
   BOOST_CHECK(flag == false);
   allowUpdate();
-  usleep(100000);
-  BOOST_CHECK(flag == true);
+  CHECK_TIMEOUT(flag == true, 5000);
   t1.join();
   waitUpdate();
 
@@ -35,8 +45,7 @@ void HelperTest::testRoutineBody() {
   usleep(100000);
   BOOST_CHECK(flag == false);
   allowSigusr1();
-  usleep(100000);
-  BOOST_CHECK(flag == true);
+  CHECK_TIMEOUT(flag == true, 5000);
   t2.join();
   waitSigusr1();
 
@@ -51,8 +60,7 @@ void HelperTest::testRoutineBody() {
   usleep(100000);
   BOOST_CHECK(flag == false);
   allowUpdate();
-  usleep(100000);
-  BOOST_CHECK(flag == true);
+  CHECK_TIMEOUT(flag == true, 5000);
   t3.join();
   waitUpdate();
 
@@ -74,15 +82,13 @@ void HelperTest::testRoutineBody() {
   usleep(100000);
   BOOST_CHECK(flag == false);
   allowSigusr1();
-  usleep(100000);
-  BOOST_CHECK(flag == true);
+  CHECK_TIMEOUT(flag == true, 5000);
   t4.join();
   waitSigusr1();
   usleep(100000);
   BOOST_CHECK(flag2 == false);
   allowUpdate();
-  usleep(100000);
-  BOOST_CHECK(flag2 == true);
+  CHECK_TIMEOUT(flag2 == true, 5000);
   t5.join();
   waitUpdate();
 
@@ -104,15 +110,13 @@ void HelperTest::testRoutineBody() {
   usleep(100000);
   BOOST_CHECK(flag2 == false);
   allowUpdate();
-  usleep(100000);
-  BOOST_CHECK(flag2 == true);
+  CHECK_TIMEOUT(flag2 == true, 5000);
   t7.join();
   waitUpdate();
   usleep(100000);
   BOOST_CHECK(flag == false);
   allowSigusr1();
-  usleep(100000);
-  BOOST_CHECK(flag == true);
+  CHECK_TIMEOUT(flag == true, 5000);
   t6.join();
   waitSigusr1();
 
