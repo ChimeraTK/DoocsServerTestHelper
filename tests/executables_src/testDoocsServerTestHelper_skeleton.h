@@ -22,7 +22,7 @@ using namespace boost::unit_test_framework;
 std::atomic<bool> flagTerminate;
 
 class HelperTest {
-public:
+ public:
   void testRoutine();
   void testRoutineBody(); // to be implemented for each test
 
@@ -55,16 +55,15 @@ public:
 };
 
 class HelperTestSuite : public test_suite {
-public:
+ public:
   HelperTestSuite() : test_suite("DoocsServerTestHelper class test suite") {
     boost::shared_ptr<HelperTest> HelperTestPtr(new HelperTest());
 
     add(BOOST_CLASS_TEST_CASE(&HelperTest::testRoutine, HelperTestPtr));
   }
 };
-test_suite *init_unit_test_suite(int /*argc*/, char * /*argv*/ []) {
-  framework::master_test_suite().p_name.value =
-      "DoocsServerTestHelper class test suite";
+test_suite* init_unit_test_suite(int /*argc*/, char* /*argv*/ []) {
+  framework::master_test_suite().p_name.value = "DoocsServerTestHelper class test suite";
   framework::master_test_suite().add(new HelperTestSuite());
 
   return NULL;
@@ -85,8 +84,7 @@ void HelperTest::sigusr1() {
   }
 
   // repeating loop until the termination flag is set
-  while (!flagTerminate) {
-
+  while(!flagTerminate) {
     // wait until the test routine tells us to proceed
     std::cout << "threadSigusr1 waiting..." << std::endl;
     std::future<void> future;
@@ -101,8 +99,7 @@ void HelperTest::sigusr1() {
       std::lock_guard<std::mutex> lock{queueLock};
       qSigusr1Start.pop();
     }
-    if (flagTerminate)
-      break;
+    if(flagTerminate) break;
 
     // execute sigwait
     std::cout << "sigwait ->" << std::endl;
@@ -123,8 +120,7 @@ void HelperTest::sigusr1() {
 
 void HelperTest::update() {
   struct timespec magicSleepTime {
-    DoocsServerTestHelper::magic_sleep_time_sec,
-        DoocsServerTestHelper::magic_sleep_time_usec * 1000
+    DoocsServerTestHelper::magic_sleep_time_sec, DoocsServerTestHelper::magic_sleep_time_usec * 1000
   };
   std::cout << "threadUpdate started." << std::endl;
 
@@ -136,8 +132,7 @@ void HelperTest::update() {
   }
 
   // repeating loop until the termination flag is set
-  while (!flagTerminate) {
-
+  while(!flagTerminate) {
     // wait until the test routine tells us to proceed
     std::cout << "threadUpdate waiting..." << std::endl;
     std::future<void> future;
@@ -152,8 +147,7 @@ void HelperTest::update() {
       std::lock_guard<std::mutex> lock{queueLock};
       qUpdateStart.pop();
     }
-    if (flagTerminate)
-      break;
+    if(flagTerminate) break;
 
     // execute the magic nano sleep
     std::cout << "nanosleep ->" << std::endl;
@@ -222,14 +216,12 @@ void HelperTest::waitUpdate() {
 }
 
 void sigintHandler(int) {
-  if (flagTerminate)
-    return;
+  if(flagTerminate) return;
   std::cout << "Ctrl+C received." << std::endl;
   exit(1);
 }
 
 void HelperTest::testRoutine() {
-
   // block sigusr1 for this process and thread (otherwise the signal would
   // terminate the process)
   sigset_t set;
@@ -275,7 +267,7 @@ void HelperTest::testRoutine() {
 }
 
 // necessary exported symbols to satisfy the DOOCS server lib
-const char *object_name = "";
+const char* object_name = "";
 void interrupt_usr1_prolog(int) {}
 void post_init_epilog() {}
 void refresh_epilog() {}
@@ -284,5 +276,5 @@ void eq_init_epilog() {}
 void eq_init_prolog() {}
 void eq_cancel() {}
 void post_init_prolog() {}
-void eq_create(int, void *) {}
+void eq_create(int, void*) {}
 void interrupt_usr1_epilog(int) {}
