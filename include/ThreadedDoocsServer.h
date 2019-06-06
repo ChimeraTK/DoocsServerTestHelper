@@ -5,6 +5,7 @@
 #include <thread>
 
 #include <eq_svr.h>
+#include <eq_fct.h>
 
 extern int eq_server(int, char**);
 
