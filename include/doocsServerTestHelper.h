@@ -17,7 +17,7 @@
 #include <mutex>
 #include <signal.h>
 #include <type_traits>
-
+#include <iostream>
 #include <eq_fct.h>
 
 /** Handy assertion macro */
