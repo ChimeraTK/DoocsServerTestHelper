@@ -19,6 +19,7 @@ include(cmake/add_dependency.cmake)
 add_dependency(DOOCS 19.5 server REQUIRED)
 
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
+find_package(Threads)
 
 # compiler flags etc.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wextra -Wuninitialized")
@@ -32,7 +33,7 @@ add_library(${PROJECT_NAME} SHARED ${library_sources} )
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${${PROJECT_NAME}_FULL_LIBRARY_VERSION} SOVERSION ${${PROJECT_NAME}_SOVERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS ${DOOCS_CXX_FLAGS})
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-Wl,--no-as-needed ${DOOCS_LINK_FLAGS}")
-target_link_libraries(${PROJECT_NAME} ${DOOCS_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${DOOCS_LIBRARIES} Threads::Threads)
 
 # Unit tests
 ENABLE_TESTING()
@@ -41,7 +42,7 @@ foreach( testExecutableSrcFile ${testExecutables})
   #NAME_WE means the base name without path and (longest) extension
   get_filename_component(excutableName ${testExecutableSrcFile} NAME_WE)
   add_executable(${excutableName} ${testExecutableSrcFile})
-  target_link_libraries(${excutableName} ${PROJECT_NAME})
+  target_link_libraries(${excutableName} ${PROJECT_NAME} Threads::Threads)
   add_test(${excutableName} ${excutableName})
 endforeach( testExecutableSrcFile )
 
