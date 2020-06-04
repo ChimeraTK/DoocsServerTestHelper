@@ -11,8 +11,9 @@ extern int eq_server(int, char**);
 
 class ThreadedDoocsServer {
  public:
-  ThreadedDoocsServer(std::string configFile, int argc, char* argv[], bool autoStart = true)
-  : _configFile(std::move(configFile)) {
+  ThreadedDoocsServer(
+      const std::string& serverName, std::string configFile, int argc, char* argv[], bool autoStart = true)
+  : _serverName{serverName}, _configFile(std::move(configFile)) {
     if(not _configFile.empty()) {
       // update config file with the RPC number
       std::string command = "sed -i " + _configFile +
@@ -28,6 +29,7 @@ class ThreadedDoocsServer {
 
   void start(int argc, char* argv[]) {
     // start the server
+    object_name = _serverName.c_str();
     _doocsServerThread = std::thread{eq_server, argc, argv};
   }
 
@@ -47,6 +49,7 @@ class ThreadedDoocsServer {
   }
 
  protected:
+  std::string _serverName;
   std::string _rpcNo;
   std::string _configFile;
   std::thread _doocsServerThread;
