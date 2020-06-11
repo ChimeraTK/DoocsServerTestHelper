@@ -11,10 +11,11 @@ extern int eq_server(int, char**);
 
 class ThreadedDoocsServer {
  public:
-  ThreadedDoocsServer(
-      const std::string& serverName, std::string configFile, int argc, char* argv[], bool autoStart = true)
-  : _serverName{serverName}, _configFile(std::move(configFile)) {
+  ThreadedDoocsServer(std::string configFile, int argc, char* argv[], bool autoStart = true)
+  : _serverName{"ThreadedDoocsServer"}, _configFile(std::move(configFile)) {
     if(not _configFile.empty()) {
+      auto pos = _configFile.find(".conf");
+      _serverName = _configFile.substr(0, pos);
       // update config file with the RPC number
       std::string command = "sed -i " + _configFile +
           " "
