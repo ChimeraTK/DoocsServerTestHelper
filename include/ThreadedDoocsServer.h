@@ -9,6 +9,10 @@
 
 extern int eq_server(int, char**);
 
+#ifndef object_name
+extern const char* object_name;
+#endif
+
 class ThreadedDoocsServer {
  public:
   ThreadedDoocsServer(std::string configFile, int argc, char* argv[], bool autoStart = true)
