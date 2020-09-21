@@ -21,10 +21,7 @@ class ThreadedDoocsServer {
       auto pos = _configFile.find(".conf");
       _serverName = _configFile.substr(0, pos);
       // update config file with the RPC number
-      std::string command = "sed -i " + _configFile +
-          " "
-          "-e 's/^SVR.RPC_NUMBER:.*$/SVR.RPC_NUMBER: " +
-          rpcNo() + "/'";
+      std::string command = "sed -i " + _configFile + " -e 's/^SVR.RPC_NUMBER:.*$/SVR.RPC_NUMBER: " + rpcNo() + "/'";
       auto rc = std::system(command.c_str());
       (void)rc;
     }
