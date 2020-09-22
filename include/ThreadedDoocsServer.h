@@ -94,8 +94,10 @@ class ThreadedDoocsServer {
   std::string bpn() {
     if(_bpn.empty()) {
       std::random_device rd;
-      std::uniform_int_distribution<int> dist(200, 6500);
-      // range is 2000 to 65000 in steps of 10 (BPNs allocate a block of port numbers used for ZeroMQ)
+      std::uniform_int_distribution<int> dist(2000, 6500);
+      // range is 20000 to 65000 in steps of 10 (BPNs allocate a block of port numbers used for ZeroMQ)
+      // avoid the "usual" range of 6000-10000, because there might be a normally configured server running on the
+      // same machine using a BPN in that range...
       _bpn = std::to_string(dist(rd)) + "0";
     }
 
