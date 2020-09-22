@@ -4,6 +4,9 @@
 #include <string>
 #include <thread>
 
+#include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/filesystem.hpp>
+
 #include <eq_svr.h>
 #include <eq_fct.h>
 
@@ -17,17 +20,48 @@ class ThreadedDoocsServer {
  public:
   ThreadedDoocsServer(std::string configFile, int argc, char* argv[], bool autoStart = true)
   : _serverName{"ThreadedDoocsServer"}, _configFile(std::move(configFile)) {
-    if(not _configFile.empty()) {
-      auto pos = _configFile.find(".conf");
-      _serverName = _configFile.substr(0, pos);
-      // update config file with the RPC number and BPN
-      std::string command = "sed -i " + _configFile + " -e 's/^SVR.RPC_NUMBER:.*$/SVR.RPC_NUMBER: " + rpcNo() +
-          "/' -e 's/^SVR.BPN:.*$/SVR.BPN: " + bpn() + "/'";
-      auto rc = std::system(command.c_str());
-      (void)rc;
+    assert(not _configFile.empty());
+
+    auto pos = _configFile.find(".conf");
+    _serverName = _configFile.substr(0, pos);
+
+    // rename the instance to include the rpcNo, so we don't have conflicts with config files when running in parallel
+    _serverNameInstance = _serverName + "_" + rpcNo();
+    _configFileInstance = _serverNameInstance + ".conf";
+
+    // instance is renamed by changing argv[0] - need to copy the whole argv array so we don't modify it for the caller!
+    _argv.resize(argc);
+    _serverNameInstanceC = std::shared_ptr<char>((char*)malloc(_serverNameInstance.size() + 1));
+    strcpy(_serverNameInstanceC.get(), _serverNameInstance.c_str());
+    _argv[0] = _serverNameInstanceC.get();
+    for(int i = 1; i < argc; ++i) {
+      _argv[i] = argv[i];
     }
 
-    if(autoStart) start(argc, argv);
+    // create locks to avoid accidental conflicts with concurrent instances of the same or other tests
+    _rpcNoLockFile = "/var/lock/rpcNo_" + rpcNo() + ".lock";
+    _bpnLockFile = "/var/lock/bpn_" + bpn() + ".lock";
+    std::ofstream(_configFileInstance, std::ofstream::out);
+    std::ofstream(_rpcNoLockFile, std::ofstream::out);
+    std::ofstream(_bpnLockFile, std::ofstream::out);
+    _configMutex = boost::interprocess::file_lock(_configFileInstance.c_str());
+    _rpcNoMutex = boost::interprocess::file_lock(_rpcNoLockFile.c_str());
+    _bpnMutex = boost::interprocess::file_lock(_bpnLockFile.c_str());
+    _configLock = std::unique_lock<boost::interprocess::file_lock>(_configMutex);
+    _rpcNoLock = std::unique_lock<boost::interprocess::file_lock>(_rpcNoMutex);
+    _bpnLock = std::unique_lock<boost::interprocess::file_lock>(_bpnMutex);
+
+    // also need to have symlink for the executable with the new name
+    boost::filesystem::create_symlink(_serverName, _serverNameInstance);
+
+    // update config file with the RPC number and BPN
+    std::string command = "sed " + _configFile + " -e 's/^SVR.RPC_NUMBER:.*$/SVR.RPC_NUMBER: " + rpcNo() +
+        "/' -e 's/^SVR.BPN:.*$/SVR.BPN: " + bpn() + "/' > " + _configFileInstance;
+    auto rc = std::system(command.c_str());
+    (void)rc;
+    assert(rc == 0);
+
+    if(autoStart) start(_argv.size(), _argv.data());
   }
 
   void start(int argc, char* argv[]) {
@@ -39,6 +73,12 @@ class ThreadedDoocsServer {
   virtual ~ThreadedDoocsServer() {
     eq_exit();
     _doocsServerThread.join();
+
+    // cleanup files we have created
+    boost::filesystem::remove(_configFileInstance);
+    boost::filesystem::remove(_serverNameInstance);
+    boost::filesystem::remove(_rpcNoLockFile);
+    boost::filesystem::remove(_bpnLockFile);
   }
 
   std::string rpcNo() {
@@ -63,8 +103,18 @@ class ThreadedDoocsServer {
   }
 
  protected:
-  std::string _serverName;
+  std::shared_ptr<char> _serverNameInstanceC;
+  std::vector<char*> _argv;
+  std::string _serverName, _serverNameInstance;
   std::string _rpcNo, _bpn;
-  std::string _configFile;
+  std::string _configFile, _configFileInstance;
+  std::string _rpcNoLockFile;
+  std::string _bpnLockFile;
+  boost::interprocess::file_lock _configMutex;
+  boost::interprocess::file_lock _rpcNoMutex;
+  boost::interprocess::file_lock _bpnMutex;
+  std::unique_lock<boost::interprocess::file_lock> _configLock;
+  std::unique_lock<boost::interprocess::file_lock> _rpcNoLock;
+  std::unique_lock<boost::interprocess::file_lock> _bpnLock;
   std::thread _doocsServerThread;
 };
