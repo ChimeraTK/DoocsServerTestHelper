@@ -118,7 +118,7 @@ void DoocsServerTestHelper::runUpdate() {
 /**********************************************************************************************************************/
 
 void DoocsServerTestHelper::shutdown() {
-  kill(getpid(), SIGINT);
+  eq_exit();
   usleep(100000);
   allowUpdate = true;
   allowSigusr1 = true;

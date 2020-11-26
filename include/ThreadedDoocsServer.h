@@ -71,7 +71,7 @@ class ThreadedDoocsServer {
   }
 
   virtual ~ThreadedDoocsServer() {
-    eq_exit();
+    DoocsServerTestHelper::shutdown(); // calls eq_exit() and releases the locks held by the test
     _doocsServerThread.join();
 
     // cleanup files we have created
