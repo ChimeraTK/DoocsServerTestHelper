@@ -63,26 +63,35 @@ std::mutex DoocsServerTestHelper::update_mutex;
 std::mutex DoocsServerTestHelper::sigusr1_mutex;
 std::unique_lock<std::mutex> DoocsServerTestHelper::update_lock(DoocsServerTestHelper::update_mutex);
 std::unique_lock<std::mutex> DoocsServerTestHelper::sigusr1_lock(DoocsServerTestHelper::sigusr1_mutex);
-DoocsServerTestHelper::WaitForUpdateRegisterer DoocsServerTestHelper::waitForUpdateRegisterer;
+std::atomic<bool> DoocsServerTestHelper::is_initialised(false);
+std::atomic<bool> DoocsServerTestHelper::do_shutdown(false);
 
 /**********************************************************************************************************************/
 
-void DoocsServerTestHelper::wait_for_update(
-    const EqFctSvr* /*server_location*/, const std::atomic<bool>& is_exit_requested) {
-  if(is_exit_requested) return;
+void DoocsServerTestHelper::initialise(doocs::Server* server) {
+  server->set_update_delay_fct(&DoocsServerTestHelper::wait_for_update);
+  is_initialised = true;
+}
+
+/**********************************************************************************************************************/
+
+void DoocsServerTestHelper::initialise(HelperTest*) {
+  // I just put the HelperTest into the signaure to indicate that this function is not part of the regular API and only used in tests
+  // of the DoocsServerTestHelper itself.
+  is_initialised = true;
+}
+
+/**********************************************************************************************************************/
+
+void DoocsServerTestHelper::wait_for_update(const doocs::Server* /*server*/) {
+  if(do_shutdown) return;
   static thread_local std::unique_lock<std::mutex> update_lock{DoocsServerTestHelper::update_mutex};
   do {
     update_lock.unlock();
     usleep(1);
     update_lock.lock();
-  } while(!DoocsServerTestHelper::allowUpdate && !is_exit_requested);
-  DoocsServerTestHelper::allowUpdate = false;
-}
-
-/**********************************************************************************************************************/
-
-DoocsServerTestHelper::WaitForUpdateRegisterer::WaitForUpdateRegisterer() {
-  doocs::Server::set_update_delay(&DoocsServerTestHelper::wait_for_update);
+  } while(!allowUpdate && !do_shutdown);
+  allowUpdate = false;
 }
 
 /**********************************************************************************************************************/
@@ -105,6 +114,9 @@ void DoocsServerTestHelper::runSigusr1() {
 /**********************************************************************************************************************/
 
 void DoocsServerTestHelper::runUpdate() {
+  if(!is_initialised) {
+    throw std::logic_error("DoocsServerTestHelper::runUpdate() called  without calling initialise() first.");
+  }
   allowUpdate = true;
   do {
     update_lock.unlock();

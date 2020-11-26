@@ -21,6 +21,8 @@
 #include <eq_fct.h>
 #include <doocs/Server.h>
 
+class HelperTest;
+
 /** Handy assertion macro */
 #define ASSERT(condition, error_message)                                                                               \
   if(!(condition)) {                                                                                                   \
@@ -50,6 +52,16 @@ class DoocsServerTestHelper {
    * handlers (e.g. sigaction).
    */
   static void setDoNotProcessSignalsInDoocs(bool doNotProcessSignalsInDoocs = true);
+
+  /** Needed to register the wait_for_upate() function with the doocs Server object.
+   * This can only happen after the server object has been created, but has to happen
+   * before the server is started.
+   */
+  static void initialise(doocs::Server*);
+
+  /** Initialisation function for use in the test for the test helper.
+   */
+  static void initialise(HelperTest*);
 
   /** trigger doocs to run interrupt_usr1() in all locations and wait until the
    * processing is finished */
@@ -103,13 +115,7 @@ class DoocsServerTestHelper {
   /** Function to replace the wait_for_update() function in the server. It blocks
    *  until runUpdate() has been called in the test. Public to be able to unit-test it.
    */
-  static void wait_for_update(const EqFctSvr* server_location, const std::atomic<bool>& is_exit_requested);
-
-  struct WaitForUpdateRegisterer {
-    WaitForUpdateRegisterer();
-  };
-
-  static WaitForUpdateRegisterer waitForUpdateRegisterer;
+  static void wait_for_update(const doocs::Server* server);
 
  protected:
   friend int ::sigwait(__const sigset_t* __restrict __set, int* __restrict __sig);
@@ -132,6 +138,9 @@ class DoocsServerTestHelper {
 
   /** internal event counter */
   static int event;
+
+  static std::atomic<bool> is_initialised; // flag to check whether the server test hook has been registed
+  static std::atomic<bool> do_shutdown;    // flag to cleanly exit wait_for_update
 };
 
 /**********************************************************************************************************************/

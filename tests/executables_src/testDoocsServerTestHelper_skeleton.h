@@ -52,6 +52,8 @@ class HelperTest {
   // queue (as futures)
   std::promise<void> lastPromiseSigusr1;
   std::promise<void> lastPromiseUpdate;
+
+  HelperTest();
 };
 
 class HelperTestSuite : public test_suite {
@@ -67,6 +69,11 @@ test_suite* init_unit_test_suite(int /*argc*/, char* /*argv*/ []) {
   framework::master_test_suite().add(new HelperTestSuite());
 
   return NULL;
+}
+
+HelperTest::HelperTest() {
+  // this allows to call DoocsServerTestHelper::runUpdate()
+  DoocsServerTestHelper::initialise(this);
 }
 
 void HelperTest::sigusr1() {
@@ -146,7 +153,7 @@ void HelperTest::update() {
     }
     if(flagTerminate) break;
 
-    DoocsServerTestHelper::wait_for_update(nullptr, false);
+    DoocsServerTestHelper::wait_for_update(nullptr);
 
     // tell the test routine that nanosleep was terminated
     std::promise<void> newPromise = std::promise<void>();
