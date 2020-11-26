@@ -1,4 +1,4 @@
-/*
+﻿/*
  * doocsServerTestHelper.h - collection of helper routines to test DOOCS
  * servers: control the DOOCS update() and interrupt_usr1() functions and access
  * properties directly through pointers (instead of the RPC interface).
@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <iostream>
 #include <eq_fct.h>
+#include <doocs/Server.h>
 
 /** Handy assertion macro */
 #define ASSERT(condition, error_message)                                                                               \
@@ -32,7 +33,7 @@
  * through pointers (instead of the RPC interface). The class has only static
  * functions, so there is no need to create an instance.
  *
- *  Warning: When linking against the DoocsServerTestHelper library, nanosleep()
+ * Warning: When linking against the DoocsServerTestHelper library, doocs::Server::wait_for_update()
  * and sigwait() will be replaced and calls to those functions will be
  * intercepted to wait until the corresponding function (runSigusr1() or
  * runUpdate()) has been called by the test code, if the passed arguments match
@@ -40,10 +41,7 @@
  * server without a test routine calling those functions, the server will hang
  * in a dead lock situation. Use this library only in combination with an
  * appropriate test routine!
- *
- *  Important: You need to set the update rate in the DOOCS server configuration
- * to the following exact values, or your test will not be able to control
- * update(): "SVR.RATE: 57005 48879 0 0" */
+ */
 
 class DoocsServerTestHelper {
  public:
@@ -102,12 +100,18 @@ class DoocsServerTestHelper {
   template<typename TYPE>
   static std::vector<TYPE> doocsGetArray(const std::string& name);
 
-  /** magic sleep time to identify the nanosleep to intercept */
-  const static int magic_sleep_time_sec;
-  const static int magic_sleep_time_usec;
+  /** Function to replace the wait_for_update() function in the server. It blocks
+   *  until runUpdate() has been called in the test. Public to be able to unit-test it.
+   */
+  static void wait_for_update(const EqFctSvr* server_location, const std::atomic<bool>& is_exit_requested);
+
+  struct WaitForUpdateRegisterer {
+    WaitForUpdateRegisterer();
+  };
+
+  static WaitForUpdateRegisterer waitForUpdateRegisterer;
 
  protected:
-  friend int ::nanosleep(__const struct timespec* __requested_time, struct timespec* __remaining);
   friend int ::sigwait(__const sigset_t* __restrict __set, int* __restrict __sig);
 
   /** mutex and flag to trigger update() */

@@ -21,27 +21,6 @@ extern EqFctSvr* server_eq;
 
 /**********************************************************************************************************************/
 
-extern "C" int nanosleep(__const struct timespec* __requested_time, struct timespec* __remaining) {
-  // call original-equivalent version if requested time does not match the magic
-  // signature
-  if(__requested_time->tv_sec != DoocsServerTestHelper::magic_sleep_time_sec ||
-      __requested_time->tv_nsec != DoocsServerTestHelper::magic_sleep_time_usec * 1000) {
-    return clock_nanosleep(CLOCK_MONOTONIC, 0, __requested_time, __remaining);
-  }
-
-  // magic signature found: wait until update requested via mutex
-  static thread_local std::unique_lock<std::mutex> update_lock{DoocsServerTestHelper::update_mutex};
-  do {
-    update_lock.unlock();
-    usleep(1);
-    update_lock.lock();
-  } while(!DoocsServerTestHelper::allowUpdate);
-  DoocsServerTestHelper::allowUpdate = false;
-  return 0;
-}
-
-/**********************************************************************************************************************/
-
 extern "C" int sigwait(__const sigset_t* __restrict __set, int* __restrict __sig) {
   // call original-equivalent version if SIGUSR1 is not in the set
   if(!sigismember(__set, SIGUSR1)) {
@@ -80,12 +59,31 @@ extern "C" int sigwait(__const sigset_t* __restrict __set, int* __restrict __sig
 std::atomic<bool> DoocsServerTestHelper::allowUpdate(false);
 std::atomic<bool> DoocsServerTestHelper::allowSigusr1(false);
 std::atomic<bool> DoocsServerTestHelper::doNotProcessSignalsInDoocs(false);
-const int DoocsServerTestHelper::magic_sleep_time_sec = 57005;  // 0xDEAD
-const int DoocsServerTestHelper::magic_sleep_time_usec = 48879; // 0xBEEF
 std::mutex DoocsServerTestHelper::update_mutex;
 std::mutex DoocsServerTestHelper::sigusr1_mutex;
 std::unique_lock<std::mutex> DoocsServerTestHelper::update_lock(DoocsServerTestHelper::update_mutex);
 std::unique_lock<std::mutex> DoocsServerTestHelper::sigusr1_lock(DoocsServerTestHelper::sigusr1_mutex);
+DoocsServerTestHelper::WaitForUpdateRegisterer DoocsServerTestHelper::waitForUpdateRegisterer;
+
+/**********************************************************************************************************************/
+
+void DoocsServerTestHelper::wait_for_update(
+    const EqFctSvr* /*server_location*/, const std::atomic<bool>& is_exit_requested) {
+  if(is_exit_requested) return;
+  static thread_local std::unique_lock<std::mutex> update_lock{DoocsServerTestHelper::update_mutex};
+  do {
+    update_lock.unlock();
+    usleep(1);
+    update_lock.lock();
+  } while(!DoocsServerTestHelper::allowUpdate && !is_exit_requested);
+  DoocsServerTestHelper::allowUpdate = false;
+}
+
+/**********************************************************************************************************************/
+
+DoocsServerTestHelper::WaitForUpdateRegisterer::WaitForUpdateRegisterer() {
+  doocs::Server::set_update_delay(&DoocsServerTestHelper::wait_for_update);
+}
 
 /**********************************************************************************************************************/
 

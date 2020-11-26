@@ -119,9 +119,6 @@ void HelperTest::sigusr1() {
 }
 
 void HelperTest::update() {
-  struct timespec magicSleepTime {
-    DoocsServerTestHelper::magic_sleep_time_sec, DoocsServerTestHelper::magic_sleep_time_usec * 1000
-  };
   std::cout << "threadUpdate started." << std::endl;
 
   // initialise the future queue
@@ -149,10 +146,7 @@ void HelperTest::update() {
     }
     if(flagTerminate) break;
 
-    // execute the magic nano sleep
-    std::cout << "nanosleep ->" << std::endl;
-    nanosleep(&magicSleepTime, NULL);
-    std::cout << "<- nanosleep" << std::endl;
+    DoocsServerTestHelper::wait_for_update(nullptr, false);
 
     // tell the test routine that nanosleep was terminated
     std::promise<void> newPromise = std::promise<void>();
