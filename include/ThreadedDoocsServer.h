@@ -3,6 +3,8 @@
 #include <random>
 #include <string>
 #include <thread>
+#include <memory>
+#include <doocs/Server.h>
 
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/filesystem.hpp>
@@ -67,7 +69,11 @@ class ThreadedDoocsServer {
   void start(int argc, char* argv[]) {
     // start the server
     object_name = _serverName.c_str();
-    _doocsServerThread = std::thread{eq_server, argc, argv};
+    // We have to register the wait_for_update() function of the DoocsServerTestHelper with the doocs server.
+    // This is happening in DoocsServerTestHelper::initialise. We need an instance of the doocs::Server class for it.
+    _doocsServer.reset(new doocs::Server(object_name, doocs::Server::CallsEqCreate::yes));
+    DoocsServerTestHelper::initialise(_doocsServer.get());
+    _doocsServerThread = std::thread([&]() { _doocsServer->run(argc, argv); });
   }
 
   virtual ~ThreadedDoocsServer() {
@@ -119,4 +125,5 @@ class ThreadedDoocsServer {
   std::unique_lock<boost::interprocess::file_lock> _rpcNoLock;
   std::unique_lock<boost::interprocess::file_lock> _bpnLock;
   std::thread _doocsServerThread;
+  std::unique_ptr<doocs::Server> _doocsServer;
 };
