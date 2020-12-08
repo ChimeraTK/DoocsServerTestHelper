@@ -132,6 +132,7 @@ void DoocsServerTestHelper::shutdown() {
   usleep(100000);
   allowUpdate = true;
   allowSigusr1 = true;
+  do_shutdown = true;
   update_lock.unlock();
   sigusr1_lock.unlock();
 }
