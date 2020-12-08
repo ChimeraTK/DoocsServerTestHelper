@@ -6,6 +6,8 @@
 #include <memory>
 #include <doocs/Server.h>
 
+#include "doocsServerTestHelper.h"
+
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/filesystem.hpp>
 
