@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include <eq_fct.h>
+#include <doocs/EqFctSvr.h>
 
 #include "doocsServerTestHelper.h"
 
