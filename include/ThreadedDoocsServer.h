@@ -75,7 +75,7 @@ class ThreadedDoocsServer {
     // This is happening in DoocsServerTestHelper::initialise. We need an instance of the doocs::Server class for it.
     _doocsServer.reset(new doocs::Server(object_name, doocs::Server::CallsEqCreate::yes));
     DoocsServerTestHelper::initialise(_doocsServer.get());
-    _doocsServerThread = std::thread([&]() { _doocsServer->run(argc, argv); });
+    _doocsServerThread = std::thread([&]() { _doocsServer->run(_argv.size(), _argv.data()); });
   }
 
   virtual ~ThreadedDoocsServer() {
