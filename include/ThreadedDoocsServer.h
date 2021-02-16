@@ -39,7 +39,7 @@ class ThreadedDoocsServer {
     strcpy(_serverNameInstanceC.get(), _serverNameInstance.c_str());
     _argv[0] = _serverNameInstanceC.get();
     for(int i = 1; i < argc; ++i) {
-      _argv[i] = argv[i];
+      _argv[i] = strdup(argv[i]);
     }
 
     // create locks to avoid accidental conflicts with concurrent instances of the same or other tests
@@ -81,6 +81,9 @@ class ThreadedDoocsServer {
   virtual ~ThreadedDoocsServer() {
     DoocsServerTestHelper::shutdown(); // calls eq_exit() and releases the locks held by the test
     _doocsServerThread.join();
+    for(int i = 1; i < _argv.size(); i++) {
+      free(_argv[i]);
+    }
 
     // cleanup files we have created
     boost::filesystem::remove(_configFileInstance);
