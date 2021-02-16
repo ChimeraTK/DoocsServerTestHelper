@@ -35,7 +35,7 @@ class ThreadedDoocsServer {
 
     // instance is renamed by changing argv[0] - need to copy the whole argv array so we don't modify it for the caller!
     _argv.resize(argc);
-    _serverNameInstanceC = std::shared_ptr<char>((char*)malloc(_serverNameInstance.size() + 1));
+    _serverNameInstanceC = std::shared_ptr<char[]>(new char[_serverNameInstance.size() + 1]);
     strcpy(_serverNameInstanceC.get(), _serverNameInstance.c_str());
     _argv[0] = _serverNameInstanceC.get();
     for(int i = 1; i < argc; ++i) {
@@ -113,7 +113,7 @@ class ThreadedDoocsServer {
   }
 
  protected:
-  std::shared_ptr<char> _serverNameInstanceC;
+  std::shared_ptr<char[]> _serverNameInstanceC;
   std::vector<char*> _argv;
   std::string _serverName, _serverNameInstance;
   std::string _rpcNo, _bpn;
