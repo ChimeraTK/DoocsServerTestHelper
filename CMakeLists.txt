@@ -32,7 +32,7 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/src library_sources)
 add_library(${PROJECT_NAME} SHARED ${library_sources} )
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${${PROJECT_NAME}_FULL_LIBRARY_VERSION} SOVERSION ${${PROJECT_NAME}_SOVERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS ${DOOCS_CXX_FLAGS})
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-Wl,--no-as-needed ${DOOCS_LINK_FLAGS}")
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "${DOOCS_LINK_FLAGS}")
 target_link_libraries(${PROJECT_NAME} ${DOOCS_LIBRARIES} Threads::Threads)
 
 # Unit tests
@@ -43,6 +43,7 @@ foreach( testExecutableSrcFile ${testExecutables})
   get_filename_component(excutableName ${testExecutableSrcFile} NAME_WE)
   add_executable(${excutableName} ${testExecutableSrcFile})
   target_link_libraries(${excutableName} ${PROJECT_NAME} Threads::Threads)
+  set_target_properties(${excutableName} PROPERTIES LINK_FLAGS "${DOOCS_LINK_FLAGS}")
   add_test(${excutableName} ${excutableName})
 endforeach( testExecutableSrcFile )
 
