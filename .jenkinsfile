@@ -1,2 +1,2 @@
 @Library('ChimeraTK') _
-autojob(['DOOCS_serverlib'], 'https://github.com/ChimeraTK/DoocsServerTestHelper.git')
+autojob(['DOOCS/serverlib'], 'https://github.com/ChimeraTK/DoocsServerTestHelper.git')
