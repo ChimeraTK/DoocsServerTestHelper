@@ -1,0 +1,2 @@
+@Library('ChimeraTK') _
+buildTestDeploy(['DOOCS_serverlib'], 'https://github.com/ChimeraTK/DoocsServerTestHelper.git')
