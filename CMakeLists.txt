@@ -66,14 +66,6 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/${PROJECT_NAME})
 
 # generate cmake config so other projects can find this library
-# (this section is for compatibility only, no longer required when consuming project uses imported target)
-set(${PROJECT_NAME}_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include ${DOOCS_INCLUDE_DIRS}")
-set(${PROJECT_NAME}_LIBRARIES "${PROJECT_NAME} ${DOOCS_LIBRARIES}")
-set(${PROJECT_NAME}_LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/lib ${DOOCS_LIBRARY_DIRS}")
-set(${PROJECT_NAME}_CXX_FLAGS "${DOOCS_CXX_FLAGS}")
-set(${PROJECT_NAME}_LINKER_FLAGS "${DOOCS_LINK_FLAGS}")
-# (end of compatibility section)
-
 # we need the public dependencies so create_cmake_config_files can find them as implicit dependencies
 list(APPEND ${PROJECT_NAME}_PUBLIC_DEPENDENCIES "DOOCS COMPONENTS server;Threads")
 # we support our cmake EXPORTS as imported targets
