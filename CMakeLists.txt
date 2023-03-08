@@ -12,7 +12,7 @@ include(cmake/set_version_numbers.cmake)
 include(cmake/enable_latest_cxx_support.cmake)
 
 # linker flags
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed -Wl,--export-dynamic")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--export-dynamic")
 
 # dependencies
 find_package(DOOCS 19.5 COMPONENTS server REQUIRED)
