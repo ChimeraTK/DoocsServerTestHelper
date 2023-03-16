@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.16)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 01)
-set(${PROJECT_NAME}_MINOR_VERSION 05)
-set(${PROJECT_NAME}_PATCH_VERSION 04)
+set(${PROJECT_NAME}_MINOR_VERSION 06)
+set(${PROJECT_NAME}_PATCH_VERSION 00)
 include(cmake/set_version_numbers.cmake)
 
 # set c++ 11 support (or newer):
@@ -15,7 +15,7 @@ include(cmake/enable_latest_cxx_support.cmake)
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--export-dynamic")
 
 # dependencies
-find_package(DOOCS 19.5 COMPONENTS server REQUIRED)
+find_package(DOOCS 22.11 COMPONENTS server REQUIRED)
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 find_package(Threads)
 
