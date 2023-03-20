@@ -1,39 +1,35 @@
 PROJECT(doocs-server-test-helper)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.16)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 01)
-set(${PROJECT_NAME}_MINOR_VERSION 05)
-set(${PROJECT_NAME}_PATCH_VERSION 04)
+set(${PROJECT_NAME}_MINOR_VERSION 06)
+set(${PROJECT_NAME}_PATCH_VERSION 00)
 include(cmake/set_version_numbers.cmake)
 
 # set c++ 11 support (or newer):
 include(cmake/enable_latest_cxx_support.cmake)
 
-# linker flags
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed -Wl,--export-dynamic")
-
 # dependencies
-include(cmake/add_dependency.cmake)
-add_dependency(DOOCS 19.5 server REQUIRED)
-
+find_package(DOOCS 22.11 COMPONENTS server REQUIRED)
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 find_package(Threads)
 
 # compiler flags etc.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wextra -Wuninitialized")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 --coverage")
-include_directories(${CMAKE_SOURCE_DIR}/include)
-set(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/include/)
-aux_source_directory(${CMAKE_SOURCE_DIR}/src library_sources)
 
 # C++ library
+aux_source_directory(${CMAKE_SOURCE_DIR}/src library_sources)
 add_library(${PROJECT_NAME} SHARED ${library_sources} )
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${${PROJECT_NAME}_FULL_LIBRARY_VERSION} SOVERSION ${${PROJECT_NAME}_SOVERSION})
-set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS ${DOOCS_CXX_FLAGS})
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "${DOOCS_LINK_FLAGS}")
-target_link_libraries(${PROJECT_NAME} ${DOOCS_LIBRARIES} Threads::Threads)
+target_include_directories(${PROJECT_NAME} PUBLIC 
+    "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
+    # relative to ${CMAKE_INSTALL_PREFIX} but don't explicitly mention it, to make result relocatable
+    "$<INSTALL_INTERFACE:include>")
+set(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/include/)
+target_link_libraries(${PROJECT_NAME} PUBLIC DOOCS::server Threads::Threads)
 
 # Unit tests
 ENABLE_TESTING()
@@ -42,8 +38,7 @@ foreach( testExecutableSrcFile ${testExecutables})
   #NAME_WE means the base name without path and (longest) extension
   get_filename_component(excutableName ${testExecutableSrcFile} NAME_WE)
   add_executable(${excutableName} ${testExecutableSrcFile})
-  target_link_libraries(${excutableName} ${PROJECT_NAME} Threads::Threads)
-  set_target_properties(${excutableName} PROPERTIES LINK_FLAGS "${DOOCS_LINK_FLAGS}")
+  target_link_libraries(${excutableName} PRIVATE ${PROJECT_NAME} Threads::Threads)
   add_test(${excutableName} ${excutableName})
 endforeach( testExecutableSrcFile )
 
@@ -62,13 +57,14 @@ else(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 #Install the library and the header files
-install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
+install(TARGETS ${PROJECT_NAME} 
+    EXPORT ${PROJECT_NAME}Targets
+    LIBRARY DESTINATION lib)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/${PROJECT_NAME})
 
 # generate cmake config so other projects can find this library
-set(${PROJECT_NAME}_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include ${DOOCS_INCLUDE_DIRS}")
-set(${PROJECT_NAME}_LIBRARIES "${PROJECT_NAME} ${DOOCS_LIBRARIES}")
-set(${PROJECT_NAME}_LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/lib ${DOOCS_LIBRARY_DIRS}")
-set(${PROJECT_NAME}_CXX_FLAGS "${DOOCS_CXX_FLAGS}")
-set(${PROJECT_NAME}_LINKER_FLAGS "${DOOCS_LINK_FLAGS}")
+# we need the public dependencies so create_cmake_config_files can find them as implicit dependencies
+list(APPEND ${PROJECT_NAME}_PUBLIC_DEPENDENCIES "DOOCS COMPONENTS server;Threads")
+# we support our cmake EXPORTS as imported targets
+set(PROVIDES_EXPORTED_TARGETS 1)
 include(${CMAKE_SOURCE_DIR}/cmake/create_cmake_config_files.cmake)
