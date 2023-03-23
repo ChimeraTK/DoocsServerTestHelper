@@ -57,9 +57,11 @@ else(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 #Install the library and the header files
+# this defines architecture-dependent ${CMAKE_INSTALL_LIBDIR}
+include(GNUInstallDirs)
 install(TARGETS ${PROJECT_NAME} 
     EXPORT ${PROJECT_NAME}Targets
-    LIBRARY DESTINATION lib)
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/${PROJECT_NAME})
 
 # generate cmake config so other projects can find this library
