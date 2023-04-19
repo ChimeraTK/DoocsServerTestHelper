@@ -5,7 +5,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
 set(${PROJECT_NAME}_MAJOR_VERSION 01)
 set(${PROJECT_NAME}_MINOR_VERSION 06)
-set(${PROJECT_NAME}_PATCH_VERSION 00)
+set(${PROJECT_NAME}_PATCH_VERSION 01)
 include(cmake/set_version_numbers.cmake)
 
 # set c++ 11 support (or newer):
@@ -17,49 +17,37 @@ find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 find_package(Threads)
 
 # compiler flags etc.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wextra -Wuninitialized")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 --coverage")
+include(cmake/set_default_flags.cmake)
 
 # C++ library
 aux_source_directory(${CMAKE_SOURCE_DIR}/src library_sources)
 add_library(${PROJECT_NAME} SHARED ${library_sources} )
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${${PROJECT_NAME}_FULL_LIBRARY_VERSION} SOVERSION ${${PROJECT_NAME}_SOVERSION})
-target_include_directories(${PROJECT_NAME} PUBLIC 
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${${PROJECT_NAME}_FULL_LIBRARY_VERSION}
+                                                 SOVERSION ${${PROJECT_NAME}_SOVERSION})
+target_include_directories(${PROJECT_NAME} PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
     # relative to ${CMAKE_INSTALL_PREFIX} but don't explicitly mention it, to make result relocatable
     "$<INSTALL_INTERFACE:include>")
-set(${PROJECT_NAME}_INCLUDE_DIRS ${${PROJECT_NAME}_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/include/)
 target_link_libraries(${PROJECT_NAME} PUBLIC DOOCS::server Threads::Threads)
 
 # Unit tests
-ENABLE_TESTING()
+enable_testing()
 aux_source_directory(${CMAKE_SOURCE_DIR}/tests/executables_src testExecutables)
 foreach( testExecutableSrcFile ${testExecutables})
-  #NAME_WE means the base name without path and (longest) extension
+  # NAME_WE means the base name without path and (longest) extension
   get_filename_component(excutableName ${testExecutableSrcFile} NAME_WE)
   add_executable(${excutableName} ${testExecutableSrcFile})
-  target_link_libraries(${excutableName} PRIVATE ${PROJECT_NAME} Threads::Threads)
+  target_link_libraries(${excutableName} ${PROJECT_NAME} Threads::Threads)
   add_test(${excutableName} ${excutableName})
 endforeach( testExecutableSrcFile )
 
-# add a target to generate API documentation with Doxygen
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-  add_custom_target(doc ALL
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Generating API documentation with Doxygen" VERBATIM
-    )
-  install(DIRECTORY ${CMAKE_BINARY_DIR}/doc DESTINATION .)
-else(DOXYGEN_FOUND)
-  message("Doxygen not found, documentation will not be build.")
-endif(DOXYGEN_FOUND)
+# generate Doxygen documentation
+include(cmake/enable_doxygen_documentation.cmake)
 
 #Install the library and the header files
 # this defines architecture-dependent ${CMAKE_INSTALL_LIBDIR}
 include(GNUInstallDirs)
-install(TARGETS ${PROJECT_NAME} 
+install(TARGETS ${PROJECT_NAME}
     EXPORT ${PROJECT_NAME}Targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include/${PROJECT_NAME})
