@@ -176,7 +176,9 @@ void DoocsServerTestHelper::doocsSet(const std::string& name, const std::vector<
   else if(typeid(TYPE) == typeid(short)) {
     ed.set_type(DATA_A_SHORT);
   }
-  else if(typeid(TYPE) == typeid(long long int) || typeid(TYPE) == typeid(int32_t)) {
+  else if(typeid(TYPE) == typeid(long long int)
+        || typeid(TYPE) == typeid(int32_t)
+        || typeid(TYPE) == typeid(int64_t)){
     ed.set_type(DATA_A_LONG);
   }
   else if(typeid(TYPE) == typeid(float)) {
