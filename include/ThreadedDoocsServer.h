@@ -54,6 +54,10 @@ class ThreadedDoocsServer {
     // also need to have symlink for the executable with the new name
     boost::filesystem::create_symlink(_serverName, _serverNameInstance);
 
+    // set directory name for history files
+    std::string histdir = "hist_" + _serverName;
+    setenv("HIST_DIR", histdir.c_str(), true);
+
     // update config file with the RPC number and BPN
     std::string command = "sed " + _configFile + " -e 's/^SVR.RPC_NUMBER:.*$/SVR.RPC_NUMBER: " + rpcNo() +
         "/' -e 's/^SVR.BPN:.*$/SVR.BPN: " + bpn() + "/' > " + _configFileInstance;
