@@ -10,16 +10,16 @@
 #ifndef DOOCS_SERVER_TEST_HELPER_H
 #define DOOCS_SERVER_TEST_HELPER_H
 
-#include <cassert>
+#include <doocs/Server.h>
+#include <eq_fct.h>
+#include <type_traits>
 
 #include <atomic>
+#include <cassert>
 #include <future>
+#include <iostream>
 #include <mutex>
 #include <signal.h>
-#include <type_traits>
-#include <iostream>
-#include <eq_fct.h>
-#include <doocs/Server.h>
 
 class HelperTest;
 
@@ -176,9 +176,7 @@ void DoocsServerTestHelper::doocsSet(const std::string& name, const std::vector<
   else if(typeid(TYPE) == typeid(short)) {
     ed.set_type(DATA_A_SHORT);
   }
-  else if(typeid(TYPE) == typeid(long long int)
-        || typeid(TYPE) == typeid(int32_t)
-        || typeid(TYPE) == typeid(int64_t)){
+  else if(typeid(TYPE) == typeid(long long int) || typeid(TYPE) == typeid(int32_t) || typeid(TYPE) == typeid(int64_t)) {
     ed.set_type(DATA_A_LONG);
   }
   else if(typeid(TYPE) == typeid(float)) {

@@ -5,15 +5,15 @@
  *      Author: Martin Hierholzer
  */
 
-#include <signal.h>
+#include "doocsServerTestHelper.h"
+
+#include <doocs/EqFctSvr.h>
+#include <eq_fct.h>
 #include <sys/types.h>
+
+#include <signal.h>
 #include <time.h>
 #include <unistd.h>
-
-#include <eq_fct.h>
-#include <doocs/EqFctSvr.h>
-
-#include "doocsServerTestHelper.h"
 
 /**********************************************************************************************************************/
 
@@ -77,8 +77,8 @@ void DoocsServerTestHelper::initialise(doocs::Server* server) {
 /**********************************************************************************************************************/
 
 void DoocsServerTestHelper::initialise(HelperTest*) {
-  // I just put the HelperTest into the signaure to indicate that this function is not part of the regular API and only used in tests
-  // of the DoocsServerTestHelper itself.
+  // I just put the HelperTest into the signaure to indicate that this function is not part of the regular API and only
+  // used in tests of the DoocsServerTestHelper itself.
   is_initialised = true;
 }
 

@@ -1,17 +1,16 @@
 #pragma once
 
+#include "doocsServerTestHelper.h"
+#include <doocs/Server.h>
+#include <eq_fct.h>
+
+#include <boost/filesystem.hpp>
+#include <boost/interprocess/sync/file_lock.hpp>
+
+#include <memory>
 #include <random>
 #include <string>
 #include <thread>
-#include <memory>
-#include <doocs/Server.h>
-
-#include "doocsServerTestHelper.h"
-
-#include <boost/interprocess/sync/file_lock.hpp>
-#include <boost/filesystem.hpp>
-
-#include <eq_fct.h>
 
 #ifndef object_name
 extern const char* object_name;
