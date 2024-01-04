@@ -5,15 +5,15 @@
  * executables but share most of its code.
  */
 
+#include "doocsServerTestHelper.h"
+
 #include <boost/test/included/unit_test.hpp>
+
 #include <future>
 #include <mutex>
 #include <queue>
-
 #include <signal.h>
 #include <time.h>
-
-#include "doocsServerTestHelper.h"
 
 using namespace boost::unit_test_framework;
 
@@ -64,7 +64,7 @@ class HelperTestSuite : public test_suite {
     add(BOOST_CLASS_TEST_CASE(&HelperTest::testRoutine, HelperTestPtr));
   }
 };
-test_suite* init_unit_test_suite(int /*argc*/, char* /*argv*/ []) {
+test_suite* init_unit_test_suite(int /*argc*/, char* /*argv*/[]) {
   framework::master_test_suite().p_name.value = "DoocsServerTestHelper class test suite";
   framework::master_test_suite().add(new HelperTestSuite());
 
