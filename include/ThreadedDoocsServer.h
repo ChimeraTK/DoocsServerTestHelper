@@ -11,10 +11,7 @@
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/filesystem.hpp>
 
-#include <eq_svr.h>
 #include <eq_fct.h>
-
-extern int eq_server(int, char**);
 
 #ifndef object_name
 extern const char* object_name;
