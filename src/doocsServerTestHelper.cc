@@ -22,21 +22,20 @@ extern EqFctSvr* server_eq;
 
 /**********************************************************************************************************************/
 
-extern "C" int sigwait(__const sigset_t* __restrict __set, int* __restrict __sig) {
+extern "C" int sigwait(__const sigset_t* __restrict set, int* __restrict sig) {
   // call original-equivalent version if SIGUSR1 is not in the set
-  if(!sigismember(__set, SIGUSR1)) {
+  if(!sigismember(set, SIGUSR1)) {
     // first wait on the specified signals
-    siginfo_t __siginfo;
-    int iret = sigwaitinfo(__set, &__siginfo);
-    *__sig = __siginfo.si_signo;
+    siginfo_t siginfo;
+    int iret = sigwaitinfo(set, &siginfo);
+    *sig = siginfo.si_signo;
     // if (in the mean time) doNotProcessSignalsInDoocs has been set by the test
     // code, wait on an empty set (-> forever)
     if(DoocsServerTestHelper::doNotProcessSignalsInDoocs) {
-      siginfo_t __siginfo;
-      sigset_t ___set;
-      sigemptyset(&___set);
-      iret = sigwaitinfo(&___set, &__siginfo);
-      *__sig = __siginfo.si_signo;
+      sigset_t emptySet;
+      sigemptyset(&emptySet);
+      iret = sigwaitinfo(&emptySet, &siginfo);
+      *sig = siginfo.si_signo;
     }
     return iret;
   }
@@ -51,7 +50,7 @@ extern "C" int sigwait(__const sigset_t* __restrict __set, int* __restrict __sig
   DoocsServerTestHelper::allowSigusr1 = false;
 
   // return a SIGUSR1
-  *__sig = SIGUSR1;
+  *sig = SIGUSR1;
   return 0;
 }
 
