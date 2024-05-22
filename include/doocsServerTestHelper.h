@@ -244,8 +244,7 @@ std::vector<TYPE> DoocsServerTestHelper::doocsGetArray(const std::string& name) 
   ad.adr(name.c_str());
   EqFct* p = eq_get(&ad);
   ASSERT(p != NULL, std::string("Could not get location for property ") + name);
-  // for D_BSpectrum: set IIII structure to obtain always the latest buffer
-  // (shouldn't hurt for others)
+  // for D_Spectrum: set IIII structure to obtain always the latest buffer
   IIII iiii;
   iiii.i1_data = -1;
   iiii.i2_data = -1;
@@ -254,7 +253,13 @@ std::vector<TYPE> DoocsServerTestHelper::doocsGetArray(const std::string& name) 
   ed.set(&iiii);
   // obtain values
   p->lock();
+
+  // Try to get the data with parameters for a spectrum
   p->get(&ad, &ed, &res);
+  if(res.error() == eq_errors::not_implemeted) {
+    // if that fails, assume we have a plain array, and just not pass the second parameter at all
+    p->get(&ad, nullptr, &res);
+  }
   p->unlock();
   // copy to vector and return it
   std::vector<TYPE> val;
