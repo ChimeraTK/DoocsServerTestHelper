@@ -9,11 +9,11 @@
 
 #include <boost/test/included/unit_test.hpp>
 
+#include <csignal>
+#include <ctime>
 #include <future>
 #include <mutex>
 #include <queue>
-#include <signal.h>
-#include <time.h>
 
 using namespace boost::unit_test_framework;
 
@@ -64,19 +64,19 @@ class HelperTestSuite : public test_suite {
     add(BOOST_CLASS_TEST_CASE(&HelperTest::testRoutine, HelperTestPtr));
   }
 };
-test_suite* init_unit_test_suite(int /*argc*/, char* /*argv*/[]) {
+inline test_suite* init_unit_test_suite(int /*argc*/, char* /*argv*/[]) {
   framework::master_test_suite().p_name.value = "DoocsServerTestHelper class test suite";
   framework::master_test_suite().add(new HelperTestSuite());
 
-  return NULL;
+  return nullptr;
 }
 
-HelperTest::HelperTest() {
+inline HelperTest::HelperTest() {
   // this allows to call DoocsServerTestHelper::runUpdate()
   DoocsServerTestHelper::initialise(this);
 }
 
-void HelperTest::sigusr1() {
+inline void HelperTest::sigusr1() {
   int sig;
   sigset_t set;
   sigemptyset(&set);
@@ -106,7 +106,9 @@ void HelperTest::sigusr1() {
       std::lock_guard<std::mutex> lock{queueLock};
       qSigusr1Start.pop();
     }
-    if(flagTerminate) break;
+    if(flagTerminate) {
+      break;
+    }
 
     // execute sigwait
     std::cout << "sigwait ->" << std::endl;
@@ -125,7 +127,7 @@ void HelperTest::sigusr1() {
   std::cout << "threadSigusr1 terminated." << std::endl;
 }
 
-void HelperTest::update() {
+inline void HelperTest::update() {
   std::cout << "threadUpdate started." << std::endl;
 
   // initialise the future queue
@@ -151,9 +153,11 @@ void HelperTest::update() {
       std::lock_guard<std::mutex> lock{queueLock};
       qUpdateStart.pop();
     }
-    if(flagTerminate) break;
+    if(flagTerminate) {
+      break;
+    }
 
-    DoocsServerTestHelper::wait_for_update(nullptr);
+    DoocsServerTestHelper::waitForUpdate(nullptr);
 
     // tell the test routine that nanosleep was terminated
     std::promise<void> newPromise = std::promise<void>();
@@ -166,7 +170,7 @@ void HelperTest::update() {
   }
 }
 
-void HelperTest::allowSigusr1() {
+inline void HelperTest::allowSigusr1() {
   std::cout << "Allow sigusr1..." << std::endl;
   std::lock_guard<std::mutex> lock{queueLock};
   std::promise<void> newPromise = std::promise<void>();
@@ -176,7 +180,7 @@ void HelperTest::allowSigusr1() {
   std::cout << "sigusr1 allowed..." << std::endl;
 }
 
-void HelperTest::allowUpdate() {
+inline void HelperTest::allowUpdate() {
   std::cout << "Allow update..." << std::endl;
   std::lock_guard<std::mutex> lock{queueLock};
   std::promise<void> newPromise = std::promise<void>();
@@ -186,7 +190,7 @@ void HelperTest::allowUpdate() {
   std::cout << "update allowed..." << std::endl;
 }
 
-void HelperTest::waitSigusr1() {
+inline void HelperTest::waitSigusr1() {
   std::cout << "Wait for sigusr1 done..." << std::endl;
   std::future<void> future;
   {
@@ -201,7 +205,7 @@ void HelperTest::waitSigusr1() {
   std::cout << "sigusr1 is done." << std::endl;
 }
 
-void HelperTest::waitUpdate() {
+inline void HelperTest::waitUpdate() {
   std::cout << "Wait for update done..." << std::endl;
   std::future<void> future;
   {
@@ -216,20 +220,22 @@ void HelperTest::waitUpdate() {
   std::cout << "update is done." << std::endl;
 }
 
-void sigintHandler(int) {
-  if(flagTerminate) return;
+inline void sigintHandler(int) {
+  if(flagTerminate) {
+    return;
+  }
   std::cout << "Ctrl+C received." << std::endl;
   exit(1);
 }
 
-void HelperTest::testRoutine() {
+inline void HelperTest::testRoutine() {
   // block sigusr1 for this process and thread (otherwise the signal would
   // terminate the process)
   sigset_t set;
   sigemptyset(&set);
   sigaddset(&set, SIGUSR1);
-  sigprocmask(SIG_BLOCK, &set, NULL);
-  pthread_sigmask(SIG_BLOCK, &set, NULL);
+  sigprocmask(SIG_BLOCK, &set, nullptr);
+  pthread_sigmask(SIG_BLOCK, &set, nullptr);
 
   signal(SIGINT, sigintHandler);
 
@@ -242,9 +248,9 @@ void HelperTest::testRoutine() {
 
   // start the test threads
   std::cout << "Starting threadSigusr1..." << std::endl;
-  std::thread threadSigusr1(std::bind(&HelperTest::sigusr1, this));
+  std::thread threadSigusr1([this] { sigusr1(); });
   std::cout << "Starting threadUpdate..." << std::endl;
-  std::thread threadUpdate(std::bind(&HelperTest::update, this));
+  std::thread threadUpdate([this] { update(); });
 
   // execute the actual test
   testRoutineBody();
@@ -269,13 +275,13 @@ void HelperTest::testRoutine() {
 
 // necessary exported symbols to satisfy the DOOCS server lib
 const char* object_name = "";
-void interrupt_usr1_prolog(int) {}
-void post_init_epilog() {}
-void refresh_epilog() {}
-void refresh_prolog() {}
-void eq_init_epilog() {}
-void eq_init_prolog() {}
-void eq_cancel() {}
-void post_init_prolog() {}
-void eq_create(int, void*) {}
-void interrupt_usr1_epilog(int) {}
+inline void interrupt_usr1_prolog(int) {}
+inline void post_init_epilog() {}
+inline void refresh_epilog() {}
+inline void refresh_prolog() {}
+inline void eq_init_epilog() {}
+inline void eq_init_prolog() {}
+inline void eq_cancel() {}
+inline void post_init_prolog() {}
+inline void eqCreate(int, void*) {}
+inline void interrupt_usr1_epilog(int) {}

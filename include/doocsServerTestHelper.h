@@ -16,17 +16,17 @@
 
 #include <atomic>
 #include <cassert>
+#include <csignal>
 #include <future>
 #include <iostream>
 #include <mutex>
-#include <signal.h>
 
 class HelperTest;
 
 /** Handy assertion macro */
 #define ASSERT(condition, error_message)                                                                               \
   if(!(condition)) {                                                                                                   \
-    std::cerr << "Assertion failed (" << #condition << "): " << error_message << std::endl;                            \
+    std::cerr << "Assertion failed (" << #condition << "): " << (error_message) << std::endl;                          \
     assert(false);                                                                                                     \
   }
 
@@ -115,10 +115,10 @@ class DoocsServerTestHelper {
   /** Function to replace the wait_for_update() function in the server. It blocks
    *  until runUpdate() has been called in the test. Public to be able to unit-test it.
    */
-  static void wait_for_update(const doocs::Server* server);
+  static void waitForUpdate(const doocs::Server* server);
 
  protected:
-  friend int ::sigwait(__const sigset_t* __restrict __set, int* __restrict __sig);
+  friend int ::sigwait(__const sigset_t* __restrict _set, int* __restrict _sig);
 
   /** mutex and flag to trigger update() */
   static std::mutex update_mutex;
@@ -150,9 +150,9 @@ void DoocsServerTestHelper::doocsSet(const std::string& name, TYPE value) {
   EqAdr ad;
   EqData ed, res;
   // obtain location pointer
-  ad.adr(name.c_str());
+  ad.adr(name);
   EqFct* p = eq_get(&ad);
-  ASSERT(p != NULL, std::string("Could not get location for property ") + name);
+  ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // set value
   ed.set(value);
   p->lock();
@@ -191,11 +191,13 @@ void DoocsServerTestHelper::doocsSet(const std::string& name, const std::vector<
   ed.length(value.size());
 
   // fill spectrum data structure
-  for(int i = 0; i < value.size(); i++) ed.set(value[i], i);
+  for(int i = 0; i < value.size(); i++) {
+    ed.set(value[i], i);
+  }
   // obtain location pointer
-  ad.adr(name.c_str());
+  ad.adr(name);
   EqFct* p = eq_get(&ad);
-  ASSERT(p != NULL, std::string("Could not get location for property ") + name);
+  ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // set spectrum
   p->lock();
   p->set(&ad, &ed, &res);
@@ -211,9 +213,9 @@ TYPE DoocsServerTestHelper::doocsGet(const std::string& name) {
   EqAdr ad;
   EqData ed, res;
   // obtain location pointer
-  ad.adr(name.c_str());
+  ad.adr(name);
   EqFct* p = eq_get(&ad);
-  ASSERT(p != NULL, std::string("Could not get location for property ") + name);
+  ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // obtain value
   p->lock();
   p->get(&ad, &ed, &res);
@@ -223,7 +225,7 @@ TYPE DoocsServerTestHelper::doocsGet(const std::string& name) {
   if(std::is_integral<TYPE>()) {
     return res.get_int();
   }
-  else if(std::is_floating_point<TYPE>()) {
+  if(std::is_floating_point<TYPE>()) {
     return res.get_float();
   }
   ASSERT(false, "Wrong type passed as tempalate argument.");
@@ -241,9 +243,9 @@ std::vector<TYPE> DoocsServerTestHelper::doocsGetArray(const std::string& name) 
   EqAdr ad;
   EqData ed, res;
   // obtain location pointer
-  ad.adr(name.c_str());
+  ad.adr(name);
   EqFct* p = eq_get(&ad);
-  ASSERT(p != NULL, std::string("Could not get location for property ") + name);
+  ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // for D_Spectrum: set IIII structure to obtain always the latest buffer
   IIII iiii;
   iiii.i1_data = -1;
@@ -265,14 +267,20 @@ std::vector<TYPE> DoocsServerTestHelper::doocsGetArray(const std::string& name) 
   std::vector<TYPE> val;
   if(std::is_integral<TYPE>()) {
     if(res.type() != DATA_A_LONG) {
-      for(int i = 0; i < res.length(); i++) val.push_back(res.get_int(i));
+      for(int i = 0; i < res.length(); i++) {
+        val.push_back(res.get_int(i));
+      }
     }
     else {
-      for(int i = 0; i < res.length(); i++) val.push_back(res.get_long(i));
+      for(int i = 0; i < res.length(); i++) {
+        val.push_back(res.get_long(i));
+      }
     }
   }
   else if(std::is_floating_point<TYPE>()) {
-    for(int i = 0; i < res.length(); i++) val.push_back(res.get_float(i));
+    for(int i = 0; i < res.length(); i++) {
+      val.push_back(res.get_float(i));
+    }
   }
   else {
     ASSERT(false, "Wrong type passed as tempalate argument.");
