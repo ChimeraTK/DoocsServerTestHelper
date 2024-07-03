@@ -11,8 +11,8 @@
 #include <eq_fct.h>
 #include <sys/types.h>
 
-#include <signal.h>
-#include <time.h>
+#include <csignal>
+#include <ctime>
 #include <unistd.h>
 
 /**********************************************************************************************************************/
@@ -69,7 +69,7 @@ std::atomic<bool> DoocsServerTestHelper::do_shutdown(false);
 /**********************************************************************************************************************/
 
 void DoocsServerTestHelper::initialise(doocs::Server* server) {
-  server->set_update_delay_fct(&DoocsServerTestHelper::wait_for_update);
+  server->set_update_delay_fct(&DoocsServerTestHelper::waitForUpdate);
   is_initialised = true;
 }
 
@@ -83,8 +83,10 @@ void DoocsServerTestHelper::initialise(HelperTest*) {
 
 /**********************************************************************************************************************/
 
-void DoocsServerTestHelper::wait_for_update(const doocs::Server* /*server*/) {
-  if(do_shutdown) return;
+void DoocsServerTestHelper::waitForUpdate(const doocs::Server* /*server*/) {
+  if(do_shutdown) {
+    return;
+  }
   static thread_local std::unique_lock<std::mutex> update_lock{DoocsServerTestHelper::update_mutex};
   do {
     update_lock.unlock();
@@ -155,9 +157,9 @@ void DoocsServerTestHelper::doocsSetSpectrum(const std::string& name, const std:
                                                                    // (hopefully)
   ed.set(&spectrum);
   // obtain location pointer
-  ad.adr(name.c_str());
+  ad.adr(name);
   EqFct* p = eq_get(&ad);
-  ASSERT(p != NULL, std::string("Could not get location for property ") + name);
+  ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // set spectrum
   p->lock();
   p->set(&ad, &ed, &res);
@@ -180,9 +182,9 @@ void DoocsServerTestHelper::doocsSetIIII(const std::string& name, const std::vec
   ed.set(&iiii);
 
   // obtain location pointer
-  ad.adr(name.c_str());
+  ad.adr(name);
   EqFct* p = eq_get(&ad);
-  ASSERT(p != NULL, std::string("Could not get location for property ") + name);
+  ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // set spectrum
   p->lock();
   p->set(&ad, &ed, &res);
@@ -200,7 +202,7 @@ std::string DoocsServerTestHelper::doocsGet<std::string>(const std::string& name
   // obtain location pointer
   ad.adr(name);
   EqFct* p = eq_get(&ad);
-  ASSERT(p != NULL, std::string("Could not get location for property ") + name);
+  ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // obtain value
   p->lock();
   p->get(&ad, &ed, &res);

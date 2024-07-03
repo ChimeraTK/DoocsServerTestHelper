@@ -26,9 +26,9 @@ ThreadedDoocsServer::ThreadedDoocsServer(
   // create locks to avoid accidental conflicts with concurrent instances of the same or other tests
   _rpcNoLockFile = "/var/lock/rpcNo_" + rpcNo() + ".lock";
   _bpnLockFile = "/var/lock/bpn_" + bpn() + ".lock";
-  std::ofstream(_configFileInstance, std::ofstream::out);
-  std::ofstream(_rpcNoLockFile, std::ofstream::out);
-  std::ofstream(_bpnLockFile, std::ofstream::out);
+  std::ofstream give_me_a_name1(_configFileInstance, std::ofstream::out);
+  std::ofstream give_me_a_name2(_rpcNoLockFile, std::ofstream::out);
+  std::ofstream give_me_a_name3(_bpnLockFile, std::ofstream::out);
   _configMutex = boost::interprocess::file_lock(_configFileInstance.c_str());
   _rpcNoMutex = boost::interprocess::file_lock(_rpcNoLockFile.c_str());
   _bpnMutex = boost::interprocess::file_lock(_bpnLockFile.c_str());

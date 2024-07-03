@@ -12,7 +12,7 @@
   }
 
 void HelperTest::testRoutineBody() {
-  std::atomic<bool> flag, flag2;
+  std::atomic<bool> flag{}, flag2{};
   std::cout << "HelperTest::testRoutineBody() 1" << std::endl;
 
   // allow the update thread to enter nanosleep and the sigusr1 thread to enter

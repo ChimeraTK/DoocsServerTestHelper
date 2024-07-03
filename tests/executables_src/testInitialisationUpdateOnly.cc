@@ -12,13 +12,13 @@
   }
 
 void HelperTest::testRoutineBody() {
-  std::atomic<bool> flag;
+  std::atomic<bool> flag{};
 
   // check if nanosleep with different time than the magic number works
   struct timespec nonMagicSleepTime {
     0, 10
   };
-  nanosleep(&nonMagicSleepTime, NULL);
+  nanosleep(&nonMagicSleepTime, nullptr);
 
   // allow the update thread to enter nanosleep
   allowUpdate();
@@ -57,5 +57,5 @@ void HelperTest::testRoutineBody() {
   struct timespec nonMagicSleepTime2 {
     1, 0
   };
-  nanosleep(&nonMagicSleepTime2, NULL);
+  nanosleep(&nonMagicSleepTime2, nullptr);
 }
