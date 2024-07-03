@@ -56,20 +56,7 @@ class HelperTest {
   HelperTest();
 };
 
-class HelperTestSuite : public test_suite {
- public:
-  HelperTestSuite() : test_suite("DoocsServerTestHelper class test suite") {
-    boost::shared_ptr<HelperTest> HelperTestPtr(new HelperTest());
 
-    add(BOOST_CLASS_TEST_CASE(&HelperTest::testRoutine, HelperTestPtr));
-  }
-};
-inline test_suite* init_unit_test_suite(int /*argc*/, char* /*argv*/[]) {
-  framework::master_test_suite().p_name.value = "DoocsServerTestHelper class test suite";
-  framework::master_test_suite().add(new HelperTestSuite());
-
-  return nullptr;
-}
 
 inline HelperTest::HelperTest() {
   // this allows to call DoocsServerTestHelper::runUpdate()

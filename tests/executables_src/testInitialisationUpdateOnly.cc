@@ -1,4 +1,8 @@
+#define BOOST_TEST_MODULE testApplication
+
 #include "testDoocsServerTestHelper_skeleton.h"
+
+using namespace boost::unit_test_framework;
 
 #define CHECK_TIMEOUT(condition, maxMilliseconds)                                                                      \
   {                                                                                                                    \
@@ -58,4 +62,9 @@ void HelperTest::testRoutineBody() {
     1, 0
   };
   nanosleep(&nonMagicSleepTime2, nullptr);
+}
+
+BOOST_AUTO_TEST_CASE(testUpdateOnly) {
+  HelperTest test;
+  test.testRoutine();
 }

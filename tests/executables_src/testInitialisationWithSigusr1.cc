@@ -1,4 +1,8 @@
+#define BOOST_TEST_MODULE testApplication
+
 #include "testDoocsServerTestHelper_skeleton.h"
+
+using namespace boost::unit_test_framework;
 
 #define CHECK_TIMEOUT(condition, maxMilliseconds)                                                                      \
   {                                                                                                                    \
@@ -120,4 +124,10 @@ void HelperTest::testRoutineBody() {
   CHECK_TIMEOUT(flag == true, 5000);
   t6.join();
   waitSigusr1();
+}
+
+
+BOOST_AUTO_TEST_CASE(testWithSigusr1) {
+  HelperTest test;
+  test.testRoutine();
 }
