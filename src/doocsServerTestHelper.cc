@@ -161,9 +161,12 @@ void DoocsServerTestHelper::doocsSetSpectrum(const std::string& name, const std:
   EqFct* p = eq_get(&ad);
   ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // set spectrum
-  p->lock();
-  p->set(&ad, &ed, &res);
-  p->unlock();
+  size_t retry = 1000;
+  do {
+    p->lock();
+    p->set(&ad, &ed, &res);
+    p->unlock();
+  } while(res.error() != 0 && --retry > 0);
   // check for error
   ASSERT(res.error() == 0, std::string("Error writing spectrum property ") + name);
 }
@@ -186,9 +189,12 @@ void DoocsServerTestHelper::doocsSetIIII(const std::string& name, const std::vec
   EqFct* p = eq_get(&ad);
   ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // set spectrum
-  p->lock();
-  p->set(&ad, &ed, &res);
-  p->unlock();
+  size_t retry = 1000;
+  do {
+    p->lock();
+    p->set(&ad, &ed, &res);
+    p->unlock();
+  } while(res.error() != 0 && --retry > 0);
   // check for error
   ASSERT(res.error() == 0, std::string("Error writing IIII property ") + name);
 }
@@ -204,9 +210,12 @@ std::string DoocsServerTestHelper::doocsGet<std::string>(const std::string& name
   EqFct* p = eq_get(&ad);
   ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // obtain value
-  p->lock();
-  p->get(&ad, &ed, &res);
-  p->unlock();
+  size_t retry = 1000;
+  do {
+    p->lock();
+    p->get(&ad, &ed, &res);
+    p->unlock();
+  } while(res.error() != 0 && --retry > 0);
   // check for errors
   ASSERT(res.error() == 0, std::string("Error reading property ") + name);
   // return requested type
