@@ -155,9 +155,12 @@ void DoocsServerTestHelper::doocsSet(const std::string& name, TYPE value) {
   ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // set value
   ed.set(value);
-  p->lock();
-  p->set(&ad, &ed, &res);
-  p->unlock();
+  size_t retry = 1000;
+  do {
+    p->lock();
+    p->set(&ad, &ed, &res);
+    p->unlock();
+  } while(res.error() != 0 && --retry > 0);
   // check for error
   ASSERT(res.error() == 0, std::string("Error writing property ") + name + ": " + res.get_string());
 }
@@ -199,9 +202,12 @@ void DoocsServerTestHelper::doocsSet(const std::string& name, const std::vector<
   EqFct* p = eq_get(&ad);
   ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // set spectrum
-  p->lock();
-  p->set(&ad, &ed, &res);
-  p->unlock();
+  size_t retry = 1000;
+  do {
+    p->lock();
+    p->set(&ad, &ed, &res);
+    p->unlock();
+  } while(res.error() != 0 && --retry > 0);
   // check for error
   ASSERT(res.error() == 0, std::string("Error writing array property ") + name + ": " + res.get_string());
 }
@@ -217,9 +223,12 @@ TYPE DoocsServerTestHelper::doocsGet(const std::string& name) {
   EqFct* p = eq_get(&ad);
   ASSERT(p != nullptr, std::string("Could not get location for property ") + name);
   // obtain value
-  p->lock();
-  p->get(&ad, &ed, &res);
-  p->unlock();
+  size_t retry = 1000;
+  do {
+    p->lock();
+    p->get(&ad, &ed, &res);
+    p->unlock();
+  } while(res.error() != 0 && --retry > 0);
   // return requested type (note: std::string is handled in a template
   // specialisation)
   if(std::is_integral<TYPE>()) {
@@ -254,15 +263,21 @@ std::vector<TYPE> DoocsServerTestHelper::doocsGetArray(const std::string& name) 
   iiii.i4_data = -1;
   ed.set(&iiii);
   // obtain values
-  p->lock();
+  size_t retry = 1000;
+  do {
+    p->lock();
 
-  // Try to get the data with parameters for a spectrum
-  p->get(&ad, &ed, &res);
-  if(res.error() == eq_errors::not_implemeted) {
-    // if that fails, assume we have a plain array, and just not pass the second parameter at all
-    p->get(&ad, nullptr, &res);
-  }
-  p->unlock();
+    // Try to get the data with parameters for a spectrum
+    p->get(&ad, &ed, &res);
+    if(res.error() == eq_errors::not_implemeted) {
+      // if that fails, assume we have a plain array, and just not pass the second parameter at all
+      p->get(&ad, nullptr, &res);
+    }
+    p->unlock();
+  } while(res.error() != 0 && --retry > 0);
+  // check for errors
+  ASSERT(res.error() == 0, std::string("Error reading property ") + name);
+
   // copy to vector and return it
   std::vector<TYPE> val;
   if(std::is_integral<TYPE>()) {
@@ -276,16 +291,16 @@ std::vector<TYPE> DoocsServerTestHelper::doocsGetArray(const std::string& name) 
         val.push_back(res.get_long(i));
       }
     }
-  }
-  else if(std::is_floating_point<TYPE>()) {
-    for(int i = 0; i < res.length(); i++) {
-      val.push_back(res.get_float(i));
     }
+    else if(std::is_floating_point<TYPE>()) {
+      for(int i = 0; i < res.length(); i++) {
+        val.push_back(res.get_float(i));
+      }
+    }
+    else {
+      ASSERT(false, "Wrong type passed as tempalate argument.");
+    }
+    return val;
   }
-  else {
-    ASSERT(false, "Wrong type passed as tempalate argument.");
-  }
-  return val;
-}
 
 #endif // DOOCS_SERVER_TEST_HELPER_H
