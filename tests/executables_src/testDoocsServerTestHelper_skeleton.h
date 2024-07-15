@@ -56,8 +56,6 @@ class HelperTest {
   HelperTest();
 };
 
-
-
 inline HelperTest::HelperTest() {
   // this allows to call DoocsServerTestHelper::runUpdate()
   DoocsServerTestHelper::initialise(this);

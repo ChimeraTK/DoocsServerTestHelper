@@ -291,16 +291,16 @@ std::vector<TYPE> DoocsServerTestHelper::doocsGetArray(const std::string& name) 
         val.push_back(res.get_long(i));
       }
     }
-    }
-    else if(std::is_floating_point<TYPE>()) {
-      for(int i = 0; i < res.length(); i++) {
-        val.push_back(res.get_float(i));
-      }
-    }
-    else {
-      ASSERT(false, "Wrong type passed as tempalate argument.");
-    }
-    return val;
   }
+  else if(std::is_floating_point<TYPE>()) {
+    for(int i = 0; i < res.length(); i++) {
+      val.push_back(res.get_float(i));
+    }
+  }
+  else {
+    ASSERT(false, "Wrong type passed as tempalate argument.");
+  }
+  return val;
+}
 
 #endif // DOOCS_SERVER_TEST_HELPER_H
