@@ -126,7 +126,6 @@ void HelperTest::testRoutineBody() {
   waitSigusr1();
 }
 
-
 BOOST_AUTO_TEST_CASE(testWithSigusr1) {
   HelperTest test;
   test.testRoutine();
