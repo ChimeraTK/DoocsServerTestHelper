@@ -20,6 +20,7 @@
 #include <future>
 #include <iostream>
 #include <mutex>
+#include <unistd.h>
 
 class HelperTest;
 
