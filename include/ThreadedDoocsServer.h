@@ -1,11 +1,13 @@
 #pragma once
 
 #include "doocsServerTestHelper.h"
+
 #include <doocs/Server.h>
-#include <eq_fct.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
+
+#include <eq_fct.h>
 
 #include <memory>
 #include <random>

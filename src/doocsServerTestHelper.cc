@@ -8,12 +8,13 @@
 #include "doocsServerTestHelper.h"
 
 #include <doocs/EqFctSvr.h>
-#include <eq_fct.h>
 #include <sys/types.h>
+
+#include <eq_fct.h>
+#include <unistd.h>
 
 #include <csignal>
 #include <ctime>
-#include <unistd.h>
 
 /**********************************************************************************************************************/
 

@@ -11,8 +11,9 @@
 #define DOOCS_SERVER_TEST_HELPER_H
 
 #include <doocs/Server.h>
+
 #include <eq_fct.h>
-#include <type_traits>
+#include <unistd.h>
 
 #include <atomic>
 #include <cassert>
@@ -20,7 +21,7 @@
 #include <future>
 #include <iostream>
 #include <mutex>
-#include <unistd.h>
+#include <type_traits>
 
 class HelperTest;
 
