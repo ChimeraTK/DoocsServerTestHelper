@@ -96,9 +96,7 @@ inline void HelperTest::sigusr1() {
     }
 
     // execute sigwait
-    std::cout << "sigwait ->" << std::endl;
-    sigwait(&set, &sig);
-    std::cout << "<- sigwait" << std::endl;
+    DoocsServerTestHelper::sigwait(&set, &sig);
 
     // tell the test routine that sigwait was terminated
     std::promise<void> newPromise = std::promise<void>();
@@ -109,7 +107,6 @@ inline void HelperTest::sigusr1() {
     lastPromise.set_value();
     lastPromise.swap(newPromise);
   }
-  std::cout << "threadSigusr1 terminated." << std::endl;
 }
 
 inline void HelperTest::update() {
@@ -232,29 +229,29 @@ inline void HelperTest::testRoutine() {
   qUpdateStart.push(lastPromiseUpdate.get_future());
 
   // start the test threads
-  std::cout << "Starting threadSigusr1..." << std::endl;
-  std::thread threadSigusr1([this] { sigusr1(); });
   std::cout << "Starting threadUpdate..." << std::endl;
   std::thread threadUpdate([this] { update(); });
+  std::cout << "Starting threadSigusr1..." << std::endl;
+  std::thread threadSigusr1([this] { sigusr1(); });
 
   // execute the actual test
   testRoutineBody();
 
   // shut down the test procedure
   flagTerminate = true;
-  allowUpdate();
-  allowSigusr1();
   std::cout << "DoocsServerTestHelper::shutdown() ->" << std::endl;
+  extern int build_phase;
+  build_phase = 0; // prevent eq_exit() called inside shutdown() to just terminate the process...
   DoocsServerTestHelper::shutdown();
   std::cout << "<- DoocsServerTestHelper::shutdown()" << std::endl;
 
   std::cout << "Terminating..." << std::endl;
-  lastPromiseUpdate.set_value();
   lastPromiseSigusr1.set_value();
-  std::cout << "threadSigusr1 joining..." << std::endl;
-  threadSigusr1.join();
+  lastPromiseUpdate.set_value();
   std::cout << "threadUpdate joining..." << std::endl;
   threadUpdate.join();
+  std::cout << "threadSigusr1 joining..." << std::endl;
+  threadSigusr1.join();
   std::cout << "Finished." << std::endl;
 }
 

@@ -119,30 +119,36 @@ class DoocsServerTestHelper {
    */
   static void waitForUpdate(const doocs::Server* server);
 
+  static int sigwait(__const sigset_t* __restrict set, int* __restrict sig);
+
  protected:
-  friend int ::sigwait(__const sigset_t* __restrict _set, int* __restrict _sig);
+  struct Data {
+    /** mutex and flag to trigger update() */
+    std::mutex update_mutex;
+    std::atomic<bool> allowUpdate{false};
 
-  /** mutex and flag to trigger update() */
-  static std::mutex update_mutex;
-  static std::atomic<bool> allowUpdate;
+    /** mutex and flag to trigger interrupt_usr1() */
+    std::mutex sigusr1_mutex;
+    std::atomic<bool> allowSigusr1{false};
 
-  /** mutex and flag to trigger interrupt_usr1() */
-  static std::mutex sigusr1_mutex;
-  static std::atomic<bool> allowSigusr1;
+    /**
+     * unique locks for controlling update() and interrupt_usr1() from the test thread. We keep this here in this
+     * static Data struct, because the use of these locks is "inverted" compared to normal lock use, i.e. we normally
+     * keep the mutex locked and only unlock it temporarily in runUpdate()/runSigusr1().
+     */
+    std::unique_lock<std::mutex> update_lock{update_mutex};
+    std::unique_lock<std::mutex> sigusr1_lock{sigusr1_mutex};
 
-  /** unique locks for */
-  static std::unique_lock<std::mutex> update_lock;
-  static std::unique_lock<std::mutex> sigusr1_lock;
+    /** do not process any signals in DOOCS (to allow installing signal handlers instead) */
+    std::atomic<bool> doNotProcessSignalsInDoocs{false};
 
-  /** do not process any signals in DOOCS (to allow installing signal handlers
-   * instead) */
-  static std::atomic<bool> doNotProcessSignalsInDoocs;
+    /** internal event counter */
+    int event{0};
 
-  /** internal event counter */
-  static int event;
-
-  static std::atomic<bool> is_initialised; // flag to check whether the server test hook has been registed
-  static std::atomic<bool> do_shutdown;    // flag to cleanly exit wait_for_update
+    std::atomic<bool> is_initialised{false}; // flag to check whether the server test hook has been registed
+    std::atomic<bool> do_shutdown{false};    // flag to cleanly exit wait_for_update
+  };
+  static Data data;
 };
 
 /**********************************************************************************************************************/

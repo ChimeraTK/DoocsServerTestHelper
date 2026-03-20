@@ -23,7 +23,20 @@ extern EqFctSvr* server_eq;
 
 /**********************************************************************************************************************/
 
+DoocsServerTestHelper::Data DoocsServerTestHelper::data{};
+
+/**********************************************************************************************************************/
+
 extern "C" int sigwait(__const sigset_t* __restrict set, int* __restrict sig) {
+  // Using a static thread_local std::unique_lock<std::mutex> directly inside an extern "C" function seems to cause
+  // weird behaviour (unlocking during destruction happens in wrong thread or twice, seen by TSAN), hence we defer to a
+  // true C++ function here.
+  return DoocsServerTestHelper::sigwait(set, sig);
+}
+
+/**********************************************************************************************************************/
+
+int DoocsServerTestHelper::sigwait(__const sigset_t* __restrict set, int* __restrict sig) {
   // call original-equivalent version if SIGUSR1 is not in the set
   if(!sigismember(set, SIGUSR1)) {
     // first wait on the specified signals
@@ -32,7 +45,7 @@ extern "C" int sigwait(__const sigset_t* __restrict set, int* __restrict sig) {
     *sig = siginfo.si_signo;
     // if (in the mean time) doNotProcessSignalsInDoocs has been set by the test
     // code, wait on an empty set (-> forever)
-    if(DoocsServerTestHelper::doNotProcessSignalsInDoocs) {
+    if(DoocsServerTestHelper::data.doNotProcessSignalsInDoocs) {
       sigset_t emptySet;
       sigemptyset(&emptySet);
       iret = sigwaitinfo(&emptySet, &siginfo);
@@ -42,102 +55,123 @@ extern "C" int sigwait(__const sigset_t* __restrict set, int* __restrict sig) {
   }
 
   // SIGUSR1 is in the set: wait until sigusr1 reqested via mutex
-  static thread_local std::unique_lock<std::mutex> sigusr1_lock{DoocsServerTestHelper::sigusr1_mutex};
+  static thread_local std::unique_lock<std::mutex> sigwait_sigusr1_lock{DoocsServerTestHelper::data.sigusr1_mutex};
+
+  if(DoocsServerTestHelper::data.do_shutdown) {
+    *sig = SIGUSR1;
+    assert(sigwait_sigusr1_lock.owns_lock());
+    return 0;
+  }
+
   do {
-    sigusr1_lock.unlock();
+    if(sigwait_sigusr1_lock.owns_lock()) {
+      sigwait_sigusr1_lock.unlock();
+    }
     usleep(1);
-    sigusr1_lock.lock();
-  } while(!DoocsServerTestHelper::allowSigusr1);
-  DoocsServerTestHelper::allowSigusr1 = false;
+    sigwait_sigusr1_lock.lock();
+  } while(!DoocsServerTestHelper::data.allowSigusr1 && !DoocsServerTestHelper::data.do_shutdown);
+  DoocsServerTestHelper::data.allowSigusr1 = false;
 
   // return a SIGUSR1
   *sig = SIGUSR1;
+  assert(sigwait_sigusr1_lock.owns_lock());
   return 0;
 }
 
 /**********************************************************************************************************************/
 
-std::atomic<bool> DoocsServerTestHelper::allowUpdate(false);
-std::atomic<bool> DoocsServerTestHelper::allowSigusr1(false);
-std::atomic<bool> DoocsServerTestHelper::doNotProcessSignalsInDoocs(false);
-std::mutex DoocsServerTestHelper::update_mutex;
-std::mutex DoocsServerTestHelper::sigusr1_mutex;
-std::unique_lock<std::mutex> DoocsServerTestHelper::update_lock(DoocsServerTestHelper::update_mutex);
-std::unique_lock<std::mutex> DoocsServerTestHelper::sigusr1_lock(DoocsServerTestHelper::sigusr1_mutex);
-std::atomic<bool> DoocsServerTestHelper::is_initialised(false);
-std::atomic<bool> DoocsServerTestHelper::do_shutdown(false);
-
-/**********************************************************************************************************************/
-
 void DoocsServerTestHelper::initialise(doocs::Server* server) {
   server->set_update_delay_fct(&DoocsServerTestHelper::waitForUpdate);
-  is_initialised = true;
+  data.is_initialised = true;
 }
 
 /**********************************************************************************************************************/
 
 void DoocsServerTestHelper::initialise(HelperTest*) {
-  // I just put the HelperTest into the signaure to indicate that this function is not part of the regular API and only
-  // used in tests of the DoocsServerTestHelper itself.
-  is_initialised = true;
+  // I just put the HelperTest into the signaure to indicate that this function is not part of the regular API and
+  // only used in tests of the DoocsServerTestHelper itself.
+  data.is_initialised = true;
 }
 
 /**********************************************************************************************************************/
 
 void DoocsServerTestHelper::waitForUpdate(const doocs::Server* /*server*/) {
-  if(do_shutdown) {
+  if(data.do_shutdown) {
     return;
   }
-  static thread_local std::unique_lock<std::mutex> update_lock{DoocsServerTestHelper::update_mutex};
+  static thread_local std::unique_lock<std::mutex> waitForUpdate_update_lock{DoocsServerTestHelper::data.update_mutex};
   do {
-    update_lock.unlock();
+    if(waitForUpdate_update_lock.owns_lock()) {
+      waitForUpdate_update_lock.unlock();
+    }
     usleep(1);
-    update_lock.lock();
-  } while(!allowUpdate && !do_shutdown);
-  allowUpdate = false;
+    waitForUpdate_update_lock.lock();
+  } while(!data.allowUpdate && !data.do_shutdown);
+  data.allowUpdate = false;
 }
 
 /**********************************************************************************************************************/
 
 void DoocsServerTestHelper::setDoNotProcessSignalsInDoocs(bool _doNotProcessSignalsInDoocs) {
-  doNotProcessSignalsInDoocs = _doNotProcessSignalsInDoocs;
+  data.doNotProcessSignalsInDoocs = _doNotProcessSignalsInDoocs;
 }
 
 /**********************************************************************************************************************/
 
 void DoocsServerTestHelper::runSigusr1() {
-  allowSigusr1 = true;
+  data.allowSigusr1 = true;
   do {
-    sigusr1_lock.unlock();
+    if(data.sigusr1_lock.owns_lock()) {
+      data.sigusr1_lock.unlock();
+    }
     usleep(1);
-    sigusr1_lock.lock();
-  } while(allowSigusr1);
+    data.sigusr1_lock.lock();
+  } while(data.allowSigusr1);
 }
 
 /**********************************************************************************************************************/
 
 void DoocsServerTestHelper::runUpdate() {
-  if(!is_initialised) {
+  if(!data.is_initialised) {
     throw std::logic_error("DoocsServerTestHelper::runUpdate() called  without calling initialise() first.");
   }
-  allowUpdate = true;
+  data.allowUpdate = true;
   do {
-    update_lock.unlock();
+    if(data.update_lock.owns_lock()) {
+      data.update_lock.unlock();
+    }
     usleep(1);
-    update_lock.lock();
-  } while(allowUpdate);
+    data.update_lock.lock();
+  } while(data.allowUpdate);
 }
 
 /**********************************************************************************************************************/
 
 void DoocsServerTestHelper::shutdown() {
-  eq_exit();
+  int myBuildPhase;
+
+  extern int build_phase;
+  extern std::mutex mx_svr;
+  {
+    std::unique_lock<std::mutex> lk_svr{mx_svr};
+    myBuildPhase = build_phase;
+  }
+
+  // The global variable "myBuildPhase" from DOOCS determines the state the DOOCS server is in. If build_phase is < 2,
+  // eq_exit() will immediately terminate the process by calling exit(), which is not wanted here.
+  if(myBuildPhase > 1) {
+    eq_exit();
+  }
   usleep(100000);
-  allowUpdate = true;
-  allowSigusr1 = true;
-  do_shutdown = true;
-  update_lock.unlock();
-  sigusr1_lock.unlock();
+  data.do_shutdown = true;
+  data.allowUpdate = true;
+  data.allowSigusr1 = true;
+  if(data.update_lock.owns_lock()) {
+    data.update_lock.unlock();
+  }
+  if(data.sigusr1_lock.owns_lock()) {
+    data.sigusr1_lock.unlock();
+  }
 }
 
 /**********************************************************************************************************************/

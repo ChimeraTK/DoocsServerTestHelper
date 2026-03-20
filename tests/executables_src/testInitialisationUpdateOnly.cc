@@ -27,31 +27,31 @@ void HelperTest::testRoutineBody() {
 
   // test a full update cycle
   flag = false;
-  std::thread t1([&flag] {
-    std::cout << "DoocsServerTestHelper::runUpdate() ->" << std::endl;
-    DoocsServerTestHelper::runUpdate();
-    std::cout << "<- DoocsServerTestHelper::runUpdate()" << std::endl;
-    flag = true;
+  std::thread t1([&] {
+    usleep(100000);
+    BOOST_CHECK(flag == false);
+    allowUpdate();
+    CHECK_TIMEOUT(flag == true, 5000);
   });
-  usleep(100000);
-  BOOST_CHECK(flag == false);
-  allowUpdate();
-  CHECK_TIMEOUT(flag == true, 5000);
+  std::cout << "DoocsServerTestHelper::runUpdate() ->" << std::endl;
+  DoocsServerTestHelper::runUpdate();
+  std::cout << "<- DoocsServerTestHelper::runUpdate()" << std::endl;
+  flag = true;
   t1.join();
   waitUpdate();
 
   // test a second full update cycle
   flag = false;
-  std::thread t2([&flag] {
-    std::cout << "DoocsServerTestHelper::runUpdate() ->" << std::endl;
-    DoocsServerTestHelper::runUpdate();
-    std::cout << "<- DoocsServerTestHelper::runUpdate()" << std::endl;
-    flag = true;
+  std::thread t2([&] {
+    usleep(100000);
+    BOOST_CHECK(flag == false);
+    allowUpdate();
+    CHECK_TIMEOUT(flag == true, 5000);
   });
-  usleep(100000);
-  BOOST_CHECK(flag == false);
-  allowUpdate();
-  CHECK_TIMEOUT(flag == true, 5000);
+  std::cout << "DoocsServerTestHelper::runUpdate() ->" << std::endl;
+  DoocsServerTestHelper::runUpdate();
+  std::cout << "<- DoocsServerTestHelper::runUpdate()" << std::endl;
+  flag = true;
   t2.join();
   waitUpdate();
 
@@ -60,7 +60,7 @@ void HelperTest::testRoutineBody() {
   nanosleep(&nonMagicSleepTime2, nullptr);
 }
 
-BOOST_AUTO_TEST_CASE(testUpdateOnly) {
+BOOST_AUTO_TEST_CASE(TestUpdateOnly) {
   HelperTest test;
   test.testRoutine();
 }
