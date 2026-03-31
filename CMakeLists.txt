@@ -24,6 +24,10 @@ include(cmake/set_default_flags.cmake)
 # C++ library
 aux_source_directory(${CMAKE_SOURCE_DIR}/src library_sources)
 add_library(${PROJECT_NAME} SHARED ${library_sources})
+
+# Require C++23 standard. This will be propagated to all targets that link against this library.
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${${PROJECT_NAME}_FULL_LIBRARY_VERSION}
   SOVERSION ${${PROJECT_NAME}_SOVERSION})
 target_include_directories(${PROJECT_NAME} PUBLIC
